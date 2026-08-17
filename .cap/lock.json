@@ -1,0 +1,92 @@
+{
+  "capability_semantics": {
+    "hooks": "opaque-staging",
+    "mcp": "native-config",
+    "plugins": "opaque-staging",
+    "skills": "native-staging"
+  },
+  "clients": {
+    "codex": {
+      "adapter_version": 7,
+      "executable": "codex"
+    },
+    "omp": {
+      "adapter_version": 7,
+      "executable": "omp"
+    },
+    "qoder": {
+      "adapter_version": 7,
+      "executable": "qoder"
+    }
+  },
+  "inputs": {
+    ".cap/capabilities": {
+      "type": "directory"
+    },
+    ".cap/capabilities/hooks": {
+      "type": "directory"
+    },
+    ".cap/capabilities/mcp": {
+      "type": "directory"
+    },
+    ".cap/capabilities/plugins": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/assembly-helper": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/assembly-helper/SKILL.md": {
+      "mode": "0644",
+      "sha256": "b936fa8403d53c28bed9073eb675033422a76662e208097ecb2273fb4f0f2b78",
+      "type": "file"
+    },
+    ".cap/manifest.toml": {
+      "mode": "0644",
+      "sha256": "c6174248e456b0a978d8b26af3cb1664462e4fdfb56890342ecdb9d7eea13746",
+      "type": "file"
+    },
+    ".cap/profiles/assembly-helper.toml": {
+      "mode": "0644",
+      "sha256": "2776477683b4dd206bfec81c003d83e55de364b01bb0d341add7c49d1bee0384",
+      "type": "file"
+    },
+    ".cap/prompts/assembly-helper.md": {
+      "mode": "0644",
+      "sha256": "fbe7306fa2204be383ec865e91eed852e621fddb47dc381e4b6009f4ae5226b3",
+      "type": "file"
+    },
+    "AGENTS.md": {
+      "mode": "0644",
+      "sha256": "4604cc83bbf3bb8e320fc42cb88cd2f514c9a830ba4e151381b0cb293c8c8193",
+      "type": "file"
+    }
+  },
+  "profiles": {
+    "assembly-helper": {
+      "clients": {
+        "codex": {
+          "tree_hash": "sha256:7bbf788adb75e9c8a0989f6f42cc478820562f048ca50d45c578e63e76e9f689"
+        },
+        "omp": {
+          "tree_hash": "sha256:b55a22bbcd069d044796aed03ded268437281066af18f9e1e8c09177052242f2"
+        },
+        "qoder": {
+          "tree_hash": "sha256:635261e537716361338df4bc347abbfa1559b43a37bb1f30e0d28265a4cfb873"
+        }
+      },
+      "inventory": {
+        "hooks": [],
+        "mcps": [],
+        "plugins": [],
+        "skills": [
+          "assembly-helper"
+        ]
+      }
+    }
+  },
+  "renderer_version": "profile-renderer-v1",
+  "version": 1
+}

@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.cap-rendered/
+*.receipt.json
+*.state/
+
+# local runtime state lives outside this repository by default
+*.clean-home/
+*.agent-homes/
+*.runs/
+*.employees/
