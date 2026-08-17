@@ -9,3 +9,5 @@ __pycache__/
 *.agent-homes/
 *.runs/
 *.employees/
+*.log
+.DS_Store
