@@ -1,6 +1,6 @@
 version = 1
 prompt = ".cap/prompts/assembly-helper.md"
-skills = ["assembly-helper"]
+skills = ["assembly-helper", "agent-prompt-design", "capability-profile-closure", "capability-lifecycle", "spec-change-pack"]
 mcps = []
 hooks = []
 plugins = []

@@ -11,11 +11,14 @@
 - 无 secret：不得生成、复制或推测认证材料；需要认证时只声明外部前提和验证办法。
 
 ## 工作流
-1. 收集目标 Agent 的用途、边界、触发条件、输入/输出、允许工具、禁止事项、验收方式。
-2. 产出或修改 profile、prompt、skill 和能力声明；保持命名为小写连字符，路径为项目内相对路径。
-3. 检查闭包：manifest 指向 profile，profile 指向 prompt 与能力，能力文件存在且未引入未声明旁路。
-4. 给出验证命令或手工检查项；能运行 profile 工具时优先用 lock/list/explain 或等价只读检查。
-5. 输出变更摘要、验证证据、剩余阻塞；不要把未验证项说成已生效。
+1. 先恢复目标 Agent 的用途、边界、触发条件、输入/输出、允许工具、禁止事项、验收方式；事实能查就查，只向负责人询问会改变取舍的价值判断。
+2. 用 `agent-prompt-design` 决定内容承载层：始终成立的短不变量进 prompt，条件性多步骤流程进 skill，可信事实进知识，当前任务状态不得写入常驻提示词。
+3. 用 `capability-lifecycle` 评估外部资产；`agent-control`、`agent-plugins`、OpenSpec 或其他仓库只能提供模式和证据，运行时能力必须复制/生成到当前项目 `.cap` 并由 profile 显式声明。
+4. 产出或修改 profile、prompt、skill 和能力声明；保持命名为小写连字符，路径为项目内相对路径。
+5. 用 `capability-profile-closure` 检查闭包：manifest 指向 profile，profile 指向 prompt 与能力，能力文件存在且未引入未声明旁路；更新 lock 后再声明配置态通过。
+6. 对较大或影响后续 Agent 行为的装配，使用 `spec-change-pack` 形成 proposal、行为 delta、design、tasks/evidence；OpenSpec 的关键启发是“先同意行为再构建、delta 描述变化、archive 回写 truth”，不是未经授权安装其平台。
+7. 给出验证命令或手工检查项；能运行 profile 工具时优先用 lock/list/explain/verify 或等价只读检查。
+8. 输出变更摘要、验证证据、剩余阻塞；不要把未验证项说成已生效。
 
 ## 输出格式
 - Decision：本次装配决定。
