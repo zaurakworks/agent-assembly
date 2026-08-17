@@ -2,7 +2,7 @@
 
 用于维护 **Agent 装配助手（assembly-helper）** 的项目内能力声明、提示词、Skills 与验证证据。
 
-本仓库面向中文使用者：**说明文档以中文为主，运行时 Skill 正文保留英文**。这样既方便人阅读和审查，也避免把英文 Skill 的执行语义在翻译过程中改坏。
+本仓库面向中文使用者：**说明文档和 Skill 阅读版以中文为主，运行时 Skill 正文保留英文**。中文版本用于理解和审查，英文 `SKILL.md` 仍是唯一执行合同。
 
 ## 这个仓库解决什么问题
 
@@ -53,14 +53,14 @@ python3 tools/cap.py run assembly-helper --cli omp -- \
 |---|---|
 | 了解仓库边界 | [`AGENTS.md`](AGENTS.md) |
 | 了解当前 Agent | [`.cap/prompts/assembly-helper.md`](.cap/prompts/assembly-helper.md) |
-| 看中文 Skill 目录 | [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md) |
+| 看中文 Skill 目录和全文 | [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md) |
 | 了解如何修改和验收 | [`docs/maintenance.zh-CN.md`](docs/maintenance.zh-CN.md) |
 | 查看机器可核验闭包 | [`.cap/lock.json`](.cap/lock.json) |
 | 查看 profile 索引 | [`.cap/manifest.toml`](.cap/manifest.toml) |
 
 ## Skill 目录
 
-运行时文件位于 `.cap/capabilities/skills/<name>/SKILL.md`，正文保持英文；中文概览见 [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md)。
+运行时文件位于 `.cap/capabilities/skills/<name>/SKILL.md`，正文保持英文；对应的完整中文阅读版位于 [`docs/skills/`](docs/skills/)，总目录见 [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md)。
 
 | Skill | 用途 |
 |---|---|

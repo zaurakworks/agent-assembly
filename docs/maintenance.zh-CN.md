@@ -27,7 +27,8 @@
 - 不从用户目录、模板目录、其他仓库或 ambient provider 配置继承业务能力。
 - 不写入认证材料、token、个人运行态、临时 receipt 或临时 state。
 - 常驻 prompt 只放短约束；长流程放 Skill。
-- Skill 正文保持英文；中文解释集中放在 `docs/skill-catalog.zh-CN.md`，避免双份执行合同漂移。
+- Skill 正文保持英文；对应中文全文放在 `docs/skills/<name>.zh-CN.md`，目录和阅读顺序放在 `docs/skill-catalog.zh-CN.md`。
+- 修改英文 Skill 后，必须同步检查对应中文全文；如果语义变化，更新中文全文并在提交中一起说明，避免阅读版漂移。
 - 外部仓库内容先作为证据读取；复制进本仓后必须说明来源、边界和验证方式。
 
 ## 修改后
