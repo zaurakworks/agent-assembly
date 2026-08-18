@@ -75,6 +75,7 @@ class CapEntryTest(unittest.TestCase):
     def test_explicit_run_and_render_remain_non_interactive(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
+            (root / "home").mkdir()
             common = [
                 "--project",
                 str(root),
@@ -83,7 +84,7 @@ class CapEntryTest(unittest.TestCase):
                 "--agent-home-root",
                 str(root / "agent-homes"),
                 "--profile-tool",
-                str(root / "caprun.py"),
+                str(root / "profile.py"),
             ]
             cases = (
                 ([*common, "run", "general", "--cli", "omp", "--", "-p", "check"], "run"),
@@ -100,6 +101,35 @@ class CapEntryTest(unittest.TestCase):
                 self.assertEqual(result, 23)
                 selected = run_selected.call_args.args[0]
                 self.assertEqual(selected.profile_tool_command, command)
+                self.assertEqual(Path(selected._real_home), (root / "home").resolve())
+
+    def test_layered_commands_forward_all_binding_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            common = [
+                "--base-manifest",
+                str(root / "base.json"),
+                "--base-pin",
+                str(root / "pin.json"),
+                "--binding-dir",
+                str(root / "bindings"),
+            ]
+            verify = cap._build_parser().parse_args([*common, "verify"])
+            render = cap._build_parser().parse_args(
+                [
+                    *common,
+                    "render",
+                    "general",
+                    "--output",
+                    str(root / "output"),
+                ]
+            )
+
+        for args in (verify, render):
+            command = cap._profile_args(args)
+            self.assertIn(str(root / "base.json"), command)
+            self.assertIn(str(root / "pin.json"), command)
+            self.assertIn(str(root / "bindings"), command)
 
 
 class CapShowTest(unittest.TestCase):
@@ -210,6 +240,39 @@ class CapPreviewTest(unittest.TestCase):
         self.assertIsNone(preview)
         self.assertTrue(created)
         self.assertTrue(all(not os.path.exists(path) for path in created))
+
+
+class RealHomeRuntimeTest(unittest.TestCase):
+    def test_omp_environment_preserves_real_home_and_isolates_client_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = root / "home"
+            agent_home = root / "agent-home"
+            real_home.mkdir()
+            agent_home.mkdir()
+
+            environment = cap._agent_home_env(
+                {"HOME": "/ambient", "PI_CONFIG_DIR": "/ambient-config"},
+                agent_home,
+                real_home,
+            )
+
+        self.assertEqual(environment["HOME"], str(real_home))
+        self.assertEqual(environment["PI_CODING_AGENT_DIR"], str(agent_home))
+        self.assertEqual(environment["PI_CONFIG_DIR"], str(agent_home))
+        self.assertEqual(environment["PI_CONFIG_FILES"], str(agent_home / "config.yml"))
+
+    def test_omp_command_injects_only_profile_prompt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            agent_home = Path(temporary)
+            (agent_home / "system-prompt.md").write_text(
+                "profile prompt\n", encoding="utf-8"
+            )
+
+            command = cap._omp_command(agent_home, ["-p", "check"])
+
+        prompt = command[command.index("--append-system-prompt") + 1]
+        self.assertEqual(prompt, "profile prompt\n")
 
 
 def json_from(buffer: io.StringIO) -> dict[str, object]:

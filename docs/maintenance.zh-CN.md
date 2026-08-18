@@ -24,9 +24,9 @@
 ## 修改时
 
 - 保持 id 为小写连字符。
-- 所有运行时能力必须落在当前仓库 `.cap/capabilities/` 下，并由 profile 显式引用。
-- 不从用户目录、模板目录、其他仓库或 ambient provider 配置继承业务能力。
-- 不写入认证材料、token、个人运行态、临时 receipt 或临时 state。
+- 项目新增或替换的运行时能力必须落在当前仓库 `.cap/capabilities/` 下，并由 profile 的 `add`／`replace` 显式引用。
+- 用户环境只允许通过已审批 `real-home` manifest、workspace pin 和 derived binding 进入；不得从未绑定的用户目录、模板目录、其他仓库或 ambient provider 配置补齐业务能力。
+- 不把认证材料、token、个人运行态、临时 receipt、base manifest、pin 或 binding 写入本仓。
 - 常驻 prompt 只放短约束；长流程放 Skill。
 - 快速迭代阶段，Skill 的 `description` 和正文使用中文；`name`、目录 id、路径、命令和配置键保持规范形式。
 - `.cap/capabilities/skills/<name>/SKILL.md` 是唯一全文合同；不在 `docs/skills/` 维护需要逐项同步的另一语言镜像。
@@ -52,22 +52,28 @@ npx openspec validate <change-id> --strict --json
 # 1. 检查 Skill 标准元数据
 python3 tools/cap.py skills-validate
 
-# 2. 更新 lock：只有声明内容确实改变时执行
-python3 tools/cap.py \
-  --profile-tool ../agent-control/tools/caprun/caprun.py \
-  lock
+# 2. 更新项目层 lock：只有声明内容确实改变时执行
+python3 tools/cap.py lock
 
-# 3. 检查元数据、闭包和 lock
-python3 tools/cap.py \
-  --profile-tool ../agent-control/tools/caprun/caprun.py \
-  verify
+# 3. 项目层变化后重建 work 与两个 derived binding；不得自动刷新 base pin
+PROFILE_TOOL=../agent-control/tools/profile/profile.py
+for profile in work general assembly-helper; do
+  python3 "$PROFILE_TOOL" --project . bind \
+    --profile "$profile" \
+    --base-manifest "$HOME/.cap-user-state/locks/real-home.manifest.json" \
+    --base-pin "$HOME/work/_org/locks/agent-assembly-general/real-home.pin.json" \
+    --binding-dir "$HOME/work/_org/locks/agent-assembly-general/bindings"
+done
 
-# 4. 查看最终公共 inventory，并展开一个 CLI 的真实目标文件树
+# 4. 检查元数据、项目 lock、base pin 和全部 binding
+python3 tools/cap.py verify
+
+# 5. 查看最终公共 inventory，并展开一个 CLI 的真实目标文件树
 python3 tools/cap.py show assembly-helper
 python3 tools/cap.py show general
 python3 tools/cap.py show general --cli omp
 
-# 5. 验证活动 OpenSpec change
+# 6. 验证活动 OpenSpec change
 npx openspec validate <change-id> --strict --json
 ```
 
@@ -97,11 +103,14 @@ npx openspec validate <change-id> --strict --json
 由以下证据证明：
 
 - `.cap/lock.json`
+- `$HOME/.cap-user-state/locks/real-home.manifest.json`
+- `$HOME/work/_org/locks/agent-assembly-general/real-home.pin.json`
+- `$HOME/work/_org/locks/agent-assembly-general/bindings/*.binding.json`
 - `cap show`
 - `profile.py materialize`
-- `profile.py probe`
+- 真实客户端 runtime environment
 
-检查：lock 没有 stale，渲染 tree hash 与 lock 一致，目标客户端看到的 Skill inventory 符合预期。
+检查：项目 lock 没有 stale，base active digest 被 workspace pin 明确批准，derived binding 同时匹配 base digest 与 layer digest，渲染 tree hash 与 lock 一致，客户端保留真实 `HOME` 且配置/Session 状态根保持 profile 隔离。
 
 ### 生效态
 

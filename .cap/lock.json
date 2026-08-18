@@ -7,15 +7,15 @@
   },
   "clients": {
     "codex": {
-      "adapter_version": 1,
+      "adapter_version": 8,
       "executable": "codex"
     },
     "omp": {
-      "adapter_version": 1,
+      "adapter_version": 8,
       "executable": "omp"
     },
     "qoder": {
-      "adapter_version": 1,
+      "adapter_version": 8,
       "executable": "qoder"
     }
   },
@@ -141,27 +141,37 @@
     },
     ".cap/manifest.toml": {
       "mode": "0644",
-      "sha256": "8125f851098557aad224ed08b93f60b1adefc38d7a00b627936a8f41312423a3",
+      "sha256": "8083539c6f4f8f81199f0ec15a16791526971a6c1a2c543cc476622c43bbfc97",
       "type": "file"
     },
     ".cap/profiles/assembly-helper.toml": {
       "mode": "0644",
-      "sha256": "8d7eb2d65ebce22841688b1c4b2351da429f40b35ccc44111a1ef43724dcfdc8",
+      "sha256": "8912337beff08c87356a3c0584acbc6781168c426821f56e1d7f7ff62d5aa02e",
       "type": "file"
     },
     ".cap/profiles/general.toml": {
       "mode": "0644",
-      "sha256": "01e1abc7af4763cdb77624cc19d3543f67d74098c8c8b9db8a9a0421592a5f7b",
+      "sha256": "9be9d99995b13ea0afe59ce76944059a8ab7022b9274c8c35ffef73693c98c96",
+      "type": "file"
+    },
+    ".cap/profiles/work.toml": {
+      "mode": "0644",
+      "sha256": "8b3757acdfe254325a4dabcd40c9b39a4ac66bbd7c3157c3183356606b76a66d",
       "type": "file"
     },
     ".cap/prompts/assembly-helper.md": {
       "mode": "0644",
-      "sha256": "dbce45e0c04383db91866ddc1a215518c58df0f913a043f79959ca3f429ab7dc",
+      "sha256": "d1c260cc0a8005b93bc8450ff03d3ffb3257d789df66677fc4a1af692dea1116",
       "type": "file"
     },
     ".cap/prompts/general.md": {
       "mode": "0644",
-      "sha256": "07a2c09ca3b66bc7b9ac1a9d5b0609bde07952dd09a4cc5e7cf87ef83a6f26b4",
+      "sha256": "ce7d1f7d13472d1e3c4edbe8dccf2783c2a458babddb42cd5eee32d31c33f328",
+      "type": "file"
+    },
+    ".cap/prompts/work.md": {
+      "mode": "0644",
+      "sha256": "fa7063785f31282d5b69a09a829363a5763a301a9cd48f60a459d2ba0774f0f9",
       "type": "file"
     },
     "AGENTS.md": {
@@ -172,65 +182,192 @@
   },
   "profiles": {
     "assembly-helper": {
+      "chain": [
+        "real-home",
+        "work",
+        "assembly-helper"
+      ],
       "clients": {
         "codex": {
-          "tree_hash": "sha256:3d20f51c8b337d61337d4fdf5e2a434f35d1f5276510313b20b3e7ad5c91d118"
+          "tree_hash": "sha256:105c6fc6ab88be061cda7418ba821a348354a6fc54dc53eff0a0a530c4008f4c"
         },
         "omp": {
-          "tree_hash": "sha256:d0f2bb870704a7607dfd94dde1f26ef91e442843f87c270bc158d6ff3ee7b51d"
+          "tree_hash": "sha256:10b832f666d5b97f2c6a30accd1f8cfb2099c851e95550ec843c0a9f02d7d208"
         },
         "qoder": {
-          "tree_hash": "sha256:ff283d4b8e2a23cf7af60fe32a38edabd49f30d4608956209b863734e2d4e2e8"
+          "tree_hash": "sha256:91b0f9204b21911c7a04cb1d62525b2443d17f35ce92eef1549fddbeb71b3e14"
         }
       },
+      "extends": "work",
       "inventory": {
         "hooks": [],
         "mcps": [],
         "plugins": [],
         "skills": [
-          "assembly-helper",
+          "agent-behavior-evaluation",
           "agent-prompt-design",
           "agent-skill-design",
-          "capability-profile-closure",
+          "assembly-helper",
           "capability-lifecycle",
-          "agent-behavior-evaluation",
-          "spec-change-pack",
+          "capability-profile-closure",
+          "openspec-apply-change",
+          "openspec-archive-change",
           "openspec-explore",
           "openspec-propose",
-          "openspec-update-change",
-          "openspec-apply-change",
           "openspec-sync-specs",
-          "openspec-archive-change"
+          "openspec-update-change",
+          "spec-change-pack"
         ]
+      },
+      "layer_digest": "sha256:08c84b0370e16f4c910138036832b404f9821dece8d43f0658f7b75fec938b51",
+      "operations": {
+        "hooks": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "mcps": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "plugins": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "skills": {
+          "add": [
+            "assembly-helper",
+            "agent-prompt-design",
+            "agent-skill-design",
+            "capability-profile-closure",
+            "capability-lifecycle",
+            "agent-behavior-evaluation",
+            "spec-change-pack"
+          ],
+          "mask": [],
+          "replace": []
+        }
       }
     },
     "general": {
+      "chain": [
+        "real-home",
+        "work",
+        "general"
+      ],
       "clients": {
         "codex": {
-          "tree_hash": "sha256:b0450d89ee5bb59119ea61198c083d3bec435971c79c5d1eca7a3551fcdf2fad"
+          "tree_hash": "sha256:a4718e9a657d0e7d361372262d8002e847855c63009f61a9bdaa6dfefa67ae2f"
         },
         "omp": {
-          "tree_hash": "sha256:72ba5fa289c31a2d035d34e78523ca875b78933c19d378a8a221a4e2e5c4c9a8"
+          "tree_hash": "sha256:540f8036b6f02958afc538f46040b2efc0095c1e46438a64328d3d3142770a6b"
         },
         "qoder": {
-          "tree_hash": "sha256:e24f81cb9bd3488c47bfdbdf266be7b18b8ae5783baf7194960e034b71c19f4c"
+          "tree_hash": "sha256:e2ea0bba721252fc8d30608d7b4a76c037ded004c84ab333a113216ad6636f28"
         }
       },
+      "extends": "work",
       "inventory": {
         "hooks": [],
         "mcps": [],
         "plugins": [],
         "skills": [
+          "openspec-apply-change",
+          "openspec-archive-change",
           "openspec-explore",
           "openspec-propose",
-          "openspec-update-change",
-          "openspec-apply-change",
           "openspec-sync-specs",
-          "openspec-archive-change"
+          "openspec-update-change"
         ]
+      },
+      "layer_digest": "sha256:c9beecab11a2fbe9f0fb3b4a57a42e5b152caa98e3c175c094ee3eda4b8d3cad",
+      "operations": {
+        "hooks": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "mcps": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "plugins": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "skills": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        }
+      }
+    },
+    "work": {
+      "chain": [
+        "real-home",
+        "work"
+      ],
+      "clients": {
+        "codex": {
+          "tree_hash": "sha256:440bdd54f452fd0a35a4fc69e39e90d5dd723f5633062e56edb86bc341629984"
+        },
+        "omp": {
+          "tree_hash": "sha256:0f726f1c56fe21e7319f34e936457fc76872a30efa453e4b87aba2891064ef7b"
+        },
+        "qoder": {
+          "tree_hash": "sha256:a074af51d5b63ff6bf8ba2b09b8cd0973463ea998875716cd36c7c9c8d4b062c"
+        }
+      },
+      "extends": "real-home",
+      "inventory": {
+        "hooks": [],
+        "mcps": [],
+        "plugins": [],
+        "skills": [
+          "openspec-apply-change",
+          "openspec-archive-change",
+          "openspec-explore",
+          "openspec-propose",
+          "openspec-sync-specs",
+          "openspec-update-change"
+        ]
+      },
+      "layer_digest": "sha256:f4430e859a508985c7bb484d1d1557e2251a33d598ac3cc510e363b1e3d8f2bd",
+      "operations": {
+        "hooks": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "mcps": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "plugins": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "skills": {
+          "add": [
+            "openspec-explore",
+            "openspec-propose",
+            "openspec-update-change",
+            "openspec-apply-change",
+            "openspec-sync-specs",
+            "openspec-archive-change"
+          ],
+          "mask": [],
+          "replace": []
+        }
       }
     }
   },
-  "renderer_version": "caprun-renderer-v1",
-  "version": 1
+  "renderer_version": "profile-renderer-v2",
+  "version": 2
 }
