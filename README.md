@@ -2,6 +2,8 @@
 
 用于维护项目内显式 Agent profiles、提示词、Skills 与验证证据；当前包含通用工程 `general` 和 Agent 装配 `assembly-helper`。
 
+> **迁移状态**：profile、prompt、中文 Skill 合同、OpenSpec 与 CAP/OMP 实现已迁入 [`zaurakworks/agent-system`](https://github.com/zaurakworks/agent-system)。新装配和工具变更进入 `agent-system`；本仓暂时保留开放 Issue、PR、Session 迁移来源和 Git 历史，直到迁移索引 [`agent-system#70`](https://github.com/zaurakworks/agent-system/issues/70) 中的 successor、真实客户端证据和本地 worktree 门完成。迁移不表示既有事项已验收或关闭。
+
 本仓库面向中文使用者。快速迭代阶段，`.cap/capabilities/skills/*/SKILL.md` 的中文正文是唯一执行合同；不维护需要逐项同步的另一语言全文镜像。
 
 ## 这个仓库解决什么问题
