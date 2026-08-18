@@ -34,7 +34,7 @@
 
 ## OpenSpec 工作流
 
-OpenSpec 固定为仓库内开发依赖。先执行 `npm install`，再通过 `npx openspec` 调用；不得依赖用户级全局安装。
+OpenSpec 固定为仓库内开发依赖。先执行 `npm install`；CAP migration 的 YAML 读写依赖由 `python3 -m pip install -r requirements.txt` 安装。随后通过 `npx openspec` 调用，不得依赖用户级全局 OpenSpec。
 
 ```bash
 npx openspec status --change <change-id> --json
@@ -77,9 +77,70 @@ python3 tools/cap.py show general --cli omp
 npx openspec validate <change-id> --strict --json
 ```
 
-裸 `cap` 专用于高频启动；`cap show` 专用于查看。CLI 展开使用临时 render，只输出相对文件树和 tree hash，不启动客户端或保留临时目录。`run` 与带 `--output` 的 `render` 是参数完整、可在非 TTY 中执行的自动化接口。旧 `interactive` / `i` 不保留兼容层。当前只注册 Codex、Qoder、OMP；Claude adapter 延期到具备真实 CLI、render 和运行证据后实施，当前不得宣称支持。
+裸 `cap` 专用于高频启动；`cap show` 专用于查看。Codex/Qoder 展开使用自动清理的临时 render；OMP 展开还会生成并核对内容寻址、不可变的 effective generation，输出 portable/effective hash、共享 runtime root 和固定门禁，但不启动客户端。`run` 与带 `--output` 的 `render` 是参数完整、可在非 TTY 中执行的自动化接口。旧 `interactive` / `i` 不保留兼容层。当前只注册 Codex、Qoder、OMP；Claude adapter 延期到具备真实 CLI、render 和运行证据后实施。
 
 如果 `agent-control` 不在相邻目录，改成绝对路径。
+
+## OMP 用户级 runtime 与全局 CAS 维护
+
+持久 OMP 默认使用 `$HOME/.cap-user-state/runtimes/omp/default` 共享认证、settings、Session、history、cache 和 `agent.db`；`memory.backend` 固定为 `off`。Profile 可以跨 workdir 使用，但 profile/prompt/capability 的唯一权威仍是当前 Git 项目 `.cap`，用户级目录不得保存可编辑 catalog 或作为能力 discovery 来源。
+
+全局 render CAS 位于 `$HOME/.cap-user-state/renders/omp/<effective-hash>`。每次命中前必须先完成当前项目 manifest/profile/lock/base pin/binding 验证，再用 portable tree、profile/layer digest、adapter version、effective config与fixed gates计算期望hash并核对manifest/content。CAS删除后必须能由当前项目重建；cache存在不是声明态证据。
+
+路径参数：
+
+```bash
+--omp-runtime-id default
+--omp-runtime-root $HOME/.cap-user-state/runtimes/omp/default
+```
+
+显式 root 必须等于批准真实 HOME 与 runtime id 推导出的精确路径，拒绝真实 `~/.omp`、symlink ancestor、路径别名和越界目录。`--agent-home-root` 只表示当前项目旧状态/迁移来源。
+
+项目级 shared runtime 到用户级迁移：
+
+```bash
+# 1. dry-run：验证当前项目closure、项目源、global目标和无secret状态摘要
+python3 tools/cap.py migrate-omp-runtime
+
+# 2. 无冲突后安装/合并用户级runtime
+python3 tools/cap.py migrate-omp-runtime --apply
+```
+
+目标不存在时私有stage后原子安装；目标存在时比较schema、settings与credential identity，等价时合并内容不冲突的Session，实质差异在写入前停止。项目级renders不迁移，当前项目重新materialize到global CAS。WAL/SHM、terminal breadcrumb和临时文件不作为迁移真源。
+
+运行门禁保持：
+
+- 真实 HOME 与real-home drift gate；
+- 当前项目manifest/lock/binding先验证；
+- Skill custom directory与双allowlist；
+- ambient Skill来源和project MCP discovery关闭；
+- `--no-extensions`、`--no-rules`；
+- 全局runtime MCP denylist；
+- provider/API/OAuth/cloud credential环境清理；
+- `PI_AUTH_NO_BORROW`与metadata防护。
+
+Session默认按encoded cwd组织只是查找/展示约定，不是授权边界。显式id/path可跨profile/worktree/workdir恢复；必须观察同一Session identity和transcript连续，同时当前项目/profile prompt与Skill marker切换。
+
+真实验证要求：
+
+- 至少两个不同workdir共享一次登录/settings；
+- `general`、`assembly-helper`使用不同已验证global generations；
+- 显式同一Session path跨cwd/profile恢复；
+- 不把cwd目录分组报告为安全隔离；
+- 不同workdir/profile并发时global SQLite与CAS不变；
+- `/mcp reload` connected servers为`0`且无MCP xdev/tool；disabled source不算active capability；
+- Hook/Plugin不可可靠观察时保持`unknown`；
+- preview/receipt记录runtime id、global root、当前项目source/profile/layer digest、global generation、workdir，不记录secret。
+
+验证全部通过后：
+
+```bash
+python3 tools/cap.py migrate-omp-runtime --cleanup
+```
+
+cleanup只删除当前项目级shared runtime、project render cache和migration backup；不得删除global runtime/CAS、当前 `.cap`、真实 `~/.omp`、其他客户端配置或其他runtime id。全局CAS GC不在本change范围。
+
+本变化不修改当前项目profile、prompt、中文Skill、inventory或lock。Codex、Qoder和`--fresh`继续使用原有`--auth-root`。
 
 ## 证据分层
 
@@ -110,7 +171,7 @@ npx openspec validate <change-id> --strict --json
 - `profile.py materialize`
 - 真实客户端 runtime environment
 
-检查：项目 lock 没有 stale，base active digest 被 workspace pin 明确批准，derived binding 同时匹配 base digest 与 layer digest，渲染 tree hash 与 lock 一致，客户端保留真实 `HOME` 且配置/Session 状态根保持 profile 隔离。
+检查：项目 lock 没有 stale，base active digest 被 workspace pin 明确批准，derived binding 同时匹配 base digest 与 layer digest，portable render hash 与 lock 一致；持久 OMP 另外显示共享 runtime root、当前 profile generation、effective hash 和固定门禁。真实 `HOME` 保留，但共享 runtime 不得因此继承未审批能力。
 
 ### 生效态
 

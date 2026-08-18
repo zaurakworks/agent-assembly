@@ -40,16 +40,61 @@ python3 tools/cap.py skills-validate
 python3 tools/cap.py verify
 ```
 
-两个可运行 profile 都显式遵循 `real-home -> work -> derived` 链：`real-home` 提供真实 HOME 与原生 context，`work` 显式提供共享 OpenSpec Skills，derived 层提供角色 prompt 和专属能力。OMP 配置与 Session 状态仍隔离在 `<project>.agent-homes/<profile>/omp`；各层只用 `add`／`mask`／`replace` 合成，不复制整份用户目录。
+两个可运行 profile 都显式遵循 `real-home -> work -> derived` 链：`real-home` 提供真实 HOME 与原生 context，`work` 显式提供共享 OpenSpec Skills，derived 层提供角色 prompt 和专属能力。Profile 可以从不同 workdir 使用，但其权威定义、选择和闭包始终来自当前 Git 项目的 `.cap/manifest.toml`、profile files、capabilities、lock 和 binding。用户级目录只保存共享 OMP runtime 与经当前项目验证的内容寻址 render cache，不能枚举或补齐 profile。
 
 裸 `cap` 只承担高频启动，不显示动作菜单。`cap show` 是独立查看入口；CLI 展开使用自动清理的临时 render，不启动客户端，也不要求输出目录。脚本应使用带完整参数的显式子命令。旧 `interactive` / `i` 已直接移除，不提供兼容别名或弃用期。
 
 当前客户端注册表只有 Codex、Qoder 和 OMP。Claude 尚无本仓可运行、可渲染并经过验证的 adapter，因此当前不属于支持范围；后续在有真实 Claude CLI 的机器完成 adapter 与运行验证后再接入。
 
+### OMP 用户级 runtime 与全局 CAS
+
+持久 OMP 默认使用：
+
+```text
+$HOME/.cap-user-state/
+├── runtimes/omp/default/          # auth、settings、Session、agent.db
+└── renders/omp/<effective-hash>/  # 当前项目验证后的不可变 cache
+```
+
+可通过稳定 runtime id 表示不同用户状态域：
+
+```bash
+python3 tools/cap.py --omp-runtime-id default use general --cli omp
+```
+
+`--omp-runtime-root` 只接受与批准真实 HOME 和 runtime id 推导出的精确路径，不能指向真实 `~/.omp` 或任意目录。`--agent-home-root` 只保留为当前项目级旧状态的迁移来源。
+
+Profile render 的真源仍是当前 Git 项目。每次 cache 命中前，CAP 都先验证项目 manifest/lock/base pin/binding，重新计算 portable tree、profile/layer digest、adapter version、effective config 和固定门禁，再核对 generation manifest/content。删除整个 CAS 后应能仅凭当前项目重建；CAS 中同名目录或其他项目内容不会授权 profile。
+
+从当前项目级 shared runtime 升级：
+
+```bash
+# 无写入 dry-run：比较项目源与用户级目标
+python3 tools/cap.py migrate-omp-runtime
+
+# plan 无冲突后原子迁移到用户级 runtime
+python3 tools/cap.py migrate-omp-runtime --apply
+```
+
+目标已存在时会无 secret 比较 schema、settings、credential identity 和 Session；等价时合并不冲突 Session，实质差异在覆盖前停止。项目级 renders 不迁移，必须由当前项目重新 materialize 到全局 CAS。`memory.backend` 始终为 `off`。
+
+每次启动仍固定使用当前 generation 的 config、system prompt、Skill allowlist、显式 extension、`--no-extensions` 和 `--no-rules`。全局 runtime MCP denylist 屏蔽已观察 ambient server；真实 `/mcp reload` 应为 connected servers `0`，disabled source 不是 active capability。Hook、Plugin 无可靠观察时保持 `unknown`。
+
+Session 保存在全局 runtime 并按 encoded cwd 组织默认列表；该分组只是查找/展示约定，不是权限边界。显式 Session id/path 可以跨 profile、worktree 或 workdir 恢复，恢复时应用当前项目/profile overlay。
+
+全局 runtime/CAS、跨 workdir resume、并发和无 secret 验证通过后，才执行：
+
+```bash
+python3 tools/cap.py migrate-omp-runtime --cleanup
+```
+
+cleanup 只删除当前项目的 `<project>.agent-homes/shared/omp`、项目 render cache 和 migration backup；保留用户级 runtime/CAS、当前 `.cap`、真实 `~/.omp` 与其他客户端配置。
+
 OpenSpec 作为仓库内开发依赖，通过 `npx` 使用：
 
 ```bash
 npm install
+python3 -m pip install -r requirements.txt
 npx openspec list
 npx openspec validate --all --strict
 ```
@@ -99,7 +144,7 @@ python3 tools/cap.py run assembly-helper --cli omp -- \
 python3 tools/cap.py use general --cli omp -- --resume <session-id-or-path>
 ```
 
-OMP Session 固定保留在 profile 专属 agent home；恢复时可用 Session id 或文件路径。`--` 后参数由 CAP 原样交给 OMP。
+OMP Session 固定保留在共享 runtime；恢复时可用 Session id 或文件路径。同一 Session 可以在 `general` 与 `assembly-helper` 之间往返，历史 transcript 保留，当前 system prompt 与 Skill roster 按本次启动 profile 重新应用。`--` 后参数由 CAP 原样交给 OMP。
 
 ## 我应该先读什么
 
