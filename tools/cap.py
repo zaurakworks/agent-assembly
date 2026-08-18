@@ -22,20 +22,24 @@ def _default_profile_tool() -> Path:
     configured = os.environ.get("AGENT_CONTROL_PROFILE_TOOL")
     if configured:
         return Path(configured)
-    candidates = (
-        DEFAULT_PROJECT.parent / "agent-control" / "tools" / "caprun" / "caprun.py",
-        DEFAULT_PROJECT.parent / "agent-control" / "tools" / "profile" / "profile.py",
+    candidate = (
+        DEFAULT_PROJECT.parent
+        / "agent-control"
+        / "tools"
+        / "profile"
+        / "profile.py"
     )
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    return Path("caprun.py")
+    return candidate if candidate.is_file() else Path("profile.py")
 
 
 DEFAULT_PROFILE_TOOL = _default_profile_tool()
-DEFAULT_CLEAN_HOME = DEFAULT_PROJECT.with_name(f"{DEFAULT_PROJECT.name}.clean-home")
+DEFAULT_REAL_HOME = Path.home()
 DEFAULT_AGENT_HOME_ROOT = DEFAULT_PROJECT.with_name(f"{DEFAULT_PROJECT.name}.agent-homes")
-DEFAULT_EMPLOYEE_ROOT = DEFAULT_PROJECT.with_name(f"{DEFAULT_PROJECT.name}.employees")
+DEFAULT_BASE_MANIFEST = DEFAULT_REAL_HOME / ".cap-user-state" / "locks" / "real-home.manifest.json"
+DEFAULT_WORKSPACE_CONTROL = DEFAULT_REAL_HOME / "work" / "_org" / "locks" / DEFAULT_PROJECT.name
+DEFAULT_BASE_PIN = DEFAULT_WORKSPACE_CONTROL / "real-home.pin.json"
+DEFAULT_BINDING_DIR = DEFAULT_WORKSPACE_CONTROL / "bindings"
+DEFAULT_AUTH_ROOT = DEFAULT_PROJECT.with_name(f"{DEFAULT_PROJECT.name}.auth")
 DEFAULT_PROFILE = "assembly-helper"
 CLIENTS = ("codex", "qoder", "omp")
 DEFAULT_CLI = "omp"
@@ -175,9 +179,9 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--home",
-        default=str(DEFAULT_CLEAN_HOME),
+        default=str(DEFAULT_REAL_HOME),
         metavar="目录",
-        help="用于校验和渲染的 clean HOME；默认是 <project>.clean-home",
+        help="真实用户 HOME；默认使用当前用户 HOME",
     )
     parser.add_argument(
         "--agent-home-root",
@@ -196,7 +200,31 @@ def _build_parser() -> argparse.ArgumentParser:
         "--profile-tool",
         default=str(DEFAULT_PROFILE_TOOL),
         metavar="文件",
-        help="agent-control 的 caprun.py 或旧 profile.py 路径",
+        help="agent-control 的 profile.py 路径",
+    )
+    parser.add_argument(
+        "--base-manifest",
+        default=str(DEFAULT_BASE_MANIFEST),
+        metavar="文件",
+        help="私有 real-home manifest 路径",
+    )
+    parser.add_argument(
+        "--base-pin",
+        default=str(DEFAULT_BASE_PIN),
+        metavar="文件",
+        help="workspace real-home 审批 pin 路径",
+    )
+    parser.add_argument(
+        "--binding-dir",
+        default=str(DEFAULT_BINDING_DIR),
+        metavar="目录",
+        help="derived profile binding 目录",
+    )
+    parser.add_argument(
+        "--auth-root",
+        default=str(DEFAULT_AUTH_ROOT),
+        metavar="目录",
+        help="一次性 runtime 使用的私有认证库",
     )
 
     subparsers = parser.add_subparsers(
@@ -334,8 +362,15 @@ def _base_args(args: argparse.Namespace) -> list[str]:
         str(Path(args.project).expanduser()),
     ]
 
-def _uses_caprun(args: argparse.Namespace) -> bool:
-    return Path(args.profile_tool).name == "caprun.py"
+def _binding_args(args: argparse.Namespace) -> list[str]:
+    return [
+        "--base-manifest",
+        str(Path(args.base_manifest).expanduser()),
+        "--base-pin",
+        str(Path(args.base_pin).expanduser()),
+        "--binding-dir",
+        str(Path(args.binding_dir).expanduser()),
+    ]
 
 
 def _run_path(args: argparse.Namespace, suffix: str) -> str:
@@ -361,39 +396,29 @@ def _passthrough(values: list[str]) -> list[str]:
 def _profile_args(args: argparse.Namespace) -> list[str]:
     base = _base_args(args)
     command = args.profile_tool_command
-    if command in {"list", "lock", "verify"}:
+    if command in {"list", "lock"}:
         return [*base, command]
+    if command == "verify":
+        return [*base, command, *_binding_args(args)]
     if command == "explain":
         return [*base, "explain", "--profile", args.profile]
     if command == "materialize":
         return [
             *base,
-            "render" if _uses_caprun(args) else "materialize",
+            "materialize",
             "--client",
             args.cli,
             "--profile",
             args.profile,
             "--output",
             args.output,
+            *_binding_args(args),
         ]
     if command == "launch":
         receipt = Path(args.receipt).expanduser() if args.receipt else Path(
             _run_path(args, "receipt.json")
         )
         receipt.parent.mkdir(parents=True, exist_ok=True)
-        if _uses_caprun(args):
-            return [
-                *base,
-                "run",
-                "--client",
-                args.cli,
-                "--profile",
-                args.profile,
-                "--receipt",
-                str(receipt),
-                "--",
-                *_passthrough(args.client_args),
-            ]
         return [
             *base,
             "launch",
@@ -401,29 +426,19 @@ def _profile_args(args: argparse.Namespace) -> list[str]:
             args.cli,
             "--profile",
             args.profile,
+            "--auth-root",
+            str(Path(args.auth_root).expanduser()),
             "--receipt",
             str(receipt),
             "--workdir",
             str(_workdir(args)),
+            *_binding_args(args),
             "--",
             *_passthrough(args.client_args),
         ]
     if command == "run":
         state = args.state or _run_path(args, "state")
         Path(state).mkdir(parents=True, exist_ok=True)
-        if _uses_caprun(args):
-            return [
-                *base,
-                "run",
-                "--client",
-                args.cli,
-                "--profile",
-                args.profile,
-                "--receipt",
-                str(Path(state) / "receipt.json"),
-                "--",
-                *_passthrough(args.client_args),
-            ]
         return [
             *base,
             "run",
@@ -431,23 +446,19 @@ def _profile_args(args: argparse.Namespace) -> list[str]:
             args.cli,
             "--profile",
             args.profile,
+            "--auth-root",
+            str(Path(args.auth_root).expanduser()),
             "--state",
             state,
             "--workdir",
             str(_workdir(args)),
+            *_binding_args(args),
             "--",
             *_passthrough(args.client_args),
         ]
     raise AssertionError(f"unsupported command: {command}")
 
 
-def _migrate_default_agent_home_root(args: argparse.Namespace) -> None:
-    target = Path(args.agent_home_root).expanduser()
-    if target != DEFAULT_AGENT_HOME_ROOT:
-        return
-    legacy = DEFAULT_EMPLOYEE_ROOT
-    if legacy.exists() and not target.exists():
-        shutil.move(str(legacy), str(target))
 
 
 def _client_inventory() -> dict[str, object]:
@@ -642,13 +653,14 @@ def _render_for_agent_home(args: argparse.Namespace, env: dict[str, str], agent_
         completed = subprocess.run(
             [
                 *_base_args(args),
-                "render" if _uses_caprun(args) else "materialize",
+                "materialize",
                 "--client",
                 args.cli,
                 "--profile",
                 args.profile,
                 "--output",
                 temporary,
+                *_binding_args(args),
             ],
             capture_output=True,
             check=False,
@@ -688,6 +700,8 @@ def _render_for_agent_home(args: argparse.Namespace, env: dict[str, str], agent_
         return str(tree_hash)
 
 
+
+
 def _omp_command(agent_home: Path, forwarded: list[str]) -> list[str]:
     executable = shutil.which("omp") or "omp"
     prompt = (agent_home / "system-prompt.md").read_text(encoding="utf-8").strip() + "\n"
@@ -707,15 +721,15 @@ def _omp_command(agent_home: Path, forwarded: list[str]) -> list[str]:
     ]
 
 
-def _agent_home_env(base_env: dict[str, str], agent_home: Path) -> dict[str, str]:
+def _agent_home_env(
+    base_env: dict[str, str], agent_home: Path, real_home: Path
+) -> dict[str, str]:
     env = base_env.copy()
     for name in AMBIENT_CONFIG_ENV:
         env.pop(name, None)
-    home = agent_home / "home"
-    home.mkdir(parents=True, exist_ok=True)
     env.update(
         {
-            "HOME": str(home),
+            "HOME": str(real_home),
             "OMP_PROFILE": "default",
             "PI_CODING_AGENT_DIR": str(agent_home),
             "PI_CONFIG_DIR": str(agent_home),
@@ -726,11 +740,24 @@ def _agent_home_env(base_env: dict[str, str], agent_home: Path) -> dict[str, str
     return env
 
 
-def _write_receipt(args: argparse.Namespace, receipt: Path, return_code: int, tree_hash: str, agent_home: Path) -> None:
+def _write_receipt(
+    args: argparse.Namespace,
+    receipt: Path,
+    return_code: int,
+    tree_hash: str,
+    agent_home: Path,
+) -> None:
+    binding_path = (
+        Path(args.binding_dir).expanduser() / f"{args.profile}.binding.json"
+    )
+    binding = json.loads(binding_path.read_text(encoding="utf-8"))
     payload = {
-        "version": 1,
+        "version": 2,
         "client": args.cli,
         "profile": args.profile,
+        "base_digest": binding["base_digest"],
+        "layer_digest": binding["layer_digest"],
+        "effective_digest": binding["effective_digest"],
         "exit_code": return_code,
         "persistent_agent_home": True,
         "agent_home": str(agent_home),
@@ -739,19 +766,38 @@ def _write_receipt(args: argparse.Namespace, receipt: Path, return_code: int, tr
         "forwarded_argument_count": len(args.client_args),
     }
     receipt.parent.mkdir(parents=True, exist_ok=True)
-    receipt.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    receipt.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _run_omp_agent_home(args: argparse.Namespace, env: dict[str, str]) -> int:
     agent_home = _agent_home_dir(args)
     tree_hash = _render_for_agent_home(args, env, agent_home)
     receipt = Path(args.receipt).expanduser() if getattr(args, "receipt", None) else Path(_run_path(args, "receipt.json"))
+    workdir = _workdir(args)
+    real_home = Path(getattr(args, "_real_home", os.environ.get("HOME") or Path.home()))
     completed = subprocess.run(
         _omp_command(agent_home, _passthrough(args.client_args)),
-        cwd=str(_workdir(args)),
-        env=_agent_home_env(env, agent_home),
+        cwd=str(workdir),
+        env=_agent_home_env(env, agent_home, real_home),
         check=False,
     )
+    verified = subprocess.run(
+        [
+            *_base_args(args),
+            "verify",
+            *_binding_args(args),
+        ],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+    if verified.returncode != 0:
+        print(verified.stderr.strip() or verified.stdout.strip(), file=sys.stderr)
+        return verified.returncode
     _write_receipt(args, receipt, completed.returncode, tree_hash, agent_home)
     return completed.returncode if completed.returncode >= 0 else 128 + abs(completed.returncode)
 
@@ -802,11 +848,12 @@ def main(argv: list[str] | None = None) -> int:
         if report["standard_conformance"] != "ok":
             print(json.dumps(report, ensure_ascii=False, indent=2))
             return 2
-    _migrate_default_agent_home_root(args)
-    clean_home = Path(args.home).expanduser()
-    clean_home.mkdir(parents=True, exist_ok=True)
+    real_home = Path(args.home).expanduser().resolve(strict=True)
+    if not real_home.is_dir():
+        parser.error(f"--home 必须是目录: {real_home}")
+    args._real_home = str(real_home)
     env = os.environ.copy()
-    env["HOME"] = str(clean_home)
+    env["HOME"] = str(real_home)
     if getattr(args, "profile_tool_command", None) == "clients":
         print(json.dumps(_client_inventory(), ensure_ascii=False, indent=2))
         return 0

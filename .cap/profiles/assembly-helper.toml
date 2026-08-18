@@ -1,6 +1,23 @@
-version = 1
+version = 2
+extends = "real-home"
 prompt = ".cap/prompts/assembly-helper.md"
-skills = ["assembly-helper", "agent-prompt-design", "agent-skill-design", "capability-profile-closure", "capability-lifecycle", "agent-behavior-evaluation", "spec-change-pack", "openspec-explore", "openspec-propose", "openspec-update-change", "openspec-apply-change", "openspec-sync-specs", "openspec-archive-change"]
-mcps = []
-hooks = []
-plugins = []
+
+[skills]
+add = ["assembly-helper", "agent-prompt-design", "agent-skill-design", "capability-profile-closure", "capability-lifecycle", "agent-behavior-evaluation", "spec-change-pack", "openspec-explore", "openspec-propose", "openspec-update-change", "openspec-apply-change", "openspec-sync-specs", "openspec-archive-change"]
+mask = []
+replace = []
+
+[mcps]
+add = []
+mask = []
+replace = []
+
+[hooks]
+add = []
+mask = []
+replace = []
+
+[plugins]
+add = []
+mask = []
+replace = []

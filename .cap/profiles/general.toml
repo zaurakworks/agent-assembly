@@ -1,6 +1,23 @@
-version = 1
+version = 2
+extends = "real-home"
 prompt = ".cap/prompts/general.md"
-skills = ["openspec-explore", "openspec-propose", "openspec-update-change", "openspec-apply-change", "openspec-sync-specs", "openspec-archive-change"]
-mcps = []
-hooks = []
-plugins = []
+
+[skills]
+add = ["openspec-explore", "openspec-propose", "openspec-update-change", "openspec-apply-change", "openspec-sync-specs", "openspec-archive-change"]
+mask = []
+replace = []
+
+[mcps]
+add = []
+mask = []
+replace = []
+
+[hooks]
+add = []
+mask = []
+replace = []
+
+[plugins]
+add = []
+mask = []
+replace = []

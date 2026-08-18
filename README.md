@@ -36,11 +36,11 @@ python3 tools/cap.py agents
 # 校验 Agent Skills 标准元数据
 python3 tools/cap.py skills-validate
 
-# 校验 Skill 元数据、manifest、profile、prompt、能力闭包与 lock
-python3 tools/cap.py \
-  --profile-tool ../agent-control/tools/caprun/caprun.py \
-  verify
+# 校验 Skill 元数据、项目 lock、real-home pin 与两个 profile binding
+python3 tools/cap.py verify
 ```
+
+两个 profile 都显式 `extends = "real-home"`。客户端保留真实 `HOME`，Git、SSH、语言工具链和父级 `AGENTS.md` 继续按宿主环境工作；OMP 的配置与 Session 状态仍隔离在 `<project>.agent-homes/<profile>/omp`。项目层只用 `add`／`mask`／`replace` 改变基座能力，不复制整份用户目录。
 
 裸 `cap` 只承担高频启动，不显示动作菜单。`cap show` 是独立查看入口；CLI 展开使用自动清理的临时 render，不启动客户端，也不要求输出目录。脚本应使用带完整参数的显式子命令。旧 `interactive` / `i` 已直接移除，不提供兼容别名或弃用期。
 
@@ -56,15 +56,37 @@ npx openspec validate --all --strict
 
 初始化时使用 `--tools none`，不生成 `.agents`、`.omp`、`.qoder` 等 profile 外能力路径。
 
-`../agent-control` 是本地相邻的参考仓。如果路径不同，使用显式参数替换：
+`../agent-control` 是本地相邻的 profile 工具参考仓。如果路径不同，使用显式参数替换：
 
 ```bash
 python3 tools/cap.py \
-  --profile-tool /path/to/agent-control/tools/caprun/caprun.py \
+  --profile-tool /path/to/agent-control/tools/profile/profile.py \
   verify
 ```
 
-运行 OMP smoke test（需要外部认证库，不要把认证文件放进本仓）：
+首次使用或审查真实 HOME 后，显式刷新、审批并绑定；manifest、pin 和 binding 都不得提交到本仓：
+
+```bash
+PROFILE_TOOL=../agent-control/tools/profile/profile.py
+
+python3 "$PROFILE_TOOL" --project . base-lock \
+  --home "$HOME" \
+  --manifest "$HOME/.cap-user-state/locks/real-home.manifest.json"
+
+python3 "$PROFILE_TOOL" --project . base-approve \
+  --manifest "$HOME/.cap-user-state/locks/real-home.manifest.json" \
+  --pin "$HOME/work/_org/locks/agent-assembly-general/real-home.pin.json"
+
+for profile in general assembly-helper; do
+  python3 "$PROFILE_TOOL" --project . bind \
+    --profile "$profile" \
+    --base-manifest "$HOME/.cap-user-state/locks/real-home.manifest.json" \
+    --base-pin "$HOME/work/_org/locks/agent-assembly-general/real-home.pin.json" \
+    --binding-dir "$HOME/work/_org/locks/agent-assembly-general/bindings"
+done
+```
+
+运行 OMP smoke test（需要现有 OMP 认证状态，不要把认证文件放进本仓）：
 
 ```bash
 python3 tools/cap.py run assembly-helper --cli omp -- \
@@ -77,7 +99,7 @@ python3 tools/cap.py run assembly-helper --cli omp -- \
 python3 tools/cap.py use general --cli omp -- --resume <session-id-or-path>
 ```
 
-跨隔离 agent home 时优先使用 Session 文件路径；`--` 后参数由 CAP 原样交给 OMP。
+OMP Session 固定保留在 profile 专属 agent home；恢复时可用 Session id 或文件路径。`--` 后参数由 CAP 原样交给 OMP。
 
 ## 我应该先读什么
 
@@ -114,9 +136,9 @@ python3 tools/cap.py use general --cli omp -- --resume <session-id-or-path>
 
 不要把“文件存在”当成“Agent 已生效”：
 
-1. **声明态（declared）**：manifest、profile、prompt、Skill 文件。
-2. **配置态（configured）**：lock、render tree、materialized client config、`probe` 结果。
-3. **生效态（effective）**：真实客户端运行时的可观察输出。
+1. **声明态（declared）**：version 2 manifest、`extends`、项目层操作、prompt、Skill 文件。
+2. **配置态（configured）**：项目 lock、私有 real-home manifest、workspace pin、derived binding、render tree。
+3. **生效态（effective）**：真实客户端运行时的可观察输出；必须同时确认真实 HOME 与隔离的客户端状态根。
 
 Hook / Plugin 当前按 `opaque-staging` 处理；没有真实端加载证据时必须保持未知。本仓目前不声明 MCP、Hook 或 Plugin。
 
