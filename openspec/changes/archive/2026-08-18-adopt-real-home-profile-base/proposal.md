@@ -4,7 +4,7 @@
 
 ## What Changes
 
-- 将两个项目 profile 升级到 version 2，并显式 `extends = "real-home"`。
+- 将 `work`、`general` 与 `assembly-helper` 升级到 version 2，形成显式 `real-home -> work -> derived` 链。
 - 用 `add`、`mask`、`replace` 表达项目层能力变化；项目 lock 只纳入可移植层。
 - 用私有 real-home manifest、workspace pin 和 derived binding 锁定机器基座与项目层组合。
 - OMP 保留真实 `HOME`，同时把配置与 Session 状态隔离到 profile 专属 agent home。

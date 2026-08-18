@@ -141,27 +141,37 @@
     },
     ".cap/manifest.toml": {
       "mode": "0644",
-      "sha256": "1b6a25c0ba499f613134285b4ccc8c596cfb831971c53191c7bc42e39ca7405c",
+      "sha256": "8083539c6f4f8f81199f0ec15a16791526971a6c1a2c543cc476622c43bbfc97",
       "type": "file"
     },
     ".cap/profiles/assembly-helper.toml": {
       "mode": "0644",
-      "sha256": "406d00d4fc6200a32fd05ecbbb81718c46bf14419397f7a9812b4ce3fd7f911d",
+      "sha256": "2f1b49ab837e0b9c9560c4acc9fc2ca8fbb3fd0604d25d9fe54ad66d70d97d76",
       "type": "file"
     },
     ".cap/profiles/general.toml": {
       "mode": "0644",
-      "sha256": "13e5351ed31dfc5c8d24cbfe4d1b26f27783492d382cf25f233dd79a1c348567",
+      "sha256": "935659621badd3b26797bb6811d44d1f0226a819197e5dad07632c11dc3bf504",
+      "type": "file"
+    },
+    ".cap/profiles/work.toml": {
+      "mode": "0644",
+      "sha256": "4e3492d9e2c34622e093c0839d6b1fc10b9fa898ee9b587d6d0f4c08b35117cd",
       "type": "file"
     },
     ".cap/prompts/assembly-helper.md": {
       "mode": "0644",
-      "sha256": "9ba8ed96dcaf30b0c7817e64a9b48107f2905e3480977bcee98a3092086cd618",
+      "sha256": "d1c260cc0a8005b93bc8450ff03d3ffb3257d789df66677fc4a1af692dea1116",
       "type": "file"
     },
     ".cap/prompts/general.md": {
       "mode": "0644",
-      "sha256": "13937f90cc42e269b7700d3bce4e95f6d6e0d34bcd453be601d903fdb9e7c84a",
+      "sha256": "ce7d1f7d13472d1e3c4edbe8dccf2783c2a458babddb42cd5eee32d31c33f328",
+      "type": "file"
+    },
+    ".cap/prompts/work.md": {
+      "mode": "0644",
+      "sha256": "f0804547ac1ac8c8bb953fdfd862d1a801dbe4f1f79afa1afc9460b58d7f98ec",
       "type": "file"
     },
     "AGENTS.md": {
@@ -174,20 +184,21 @@
     "assembly-helper": {
       "chain": [
         "real-home",
+        "work",
         "assembly-helper"
       ],
       "clients": {
         "codex": {
-          "tree_hash": "sha256:d808fa77bdb0d01fb475cb7ee9144f1fabc1fea25f149c1949d62c1816259fec"
+          "tree_hash": "sha256:105c6fc6ab88be061cda7418ba821a348354a6fc54dc53eff0a0a530c4008f4c"
         },
         "omp": {
-          "tree_hash": "sha256:a7d50d5e460f0bf25d2e4d71140557c6a9a6a990afa3219d49ca99e1be2699be"
+          "tree_hash": "sha256:10b832f666d5b97f2c6a30accd1f8cfb2099c851e95550ec843c0a9f02d7d208"
         },
         "qoder": {
-          "tree_hash": "sha256:7432e3d027ae4f7a0a71a9c56479d488284ede34215989d1362096036acd2835"
+          "tree_hash": "sha256:91b0f9204b21911c7a04cb1d62525b2443d17f35ce92eef1549fddbeb71b3e14"
         }
       },
-      "extends": "real-home",
+      "extends": "work",
       "inventory": {
         "hooks": [],
         "mcps": [],
@@ -208,7 +219,7 @@
           "spec-change-pack"
         ]
       },
-      "layer_digest": "sha256:3e39b1349569ee9054451dcacc23a06cb04b5274a2c1619349657c1612a0e469",
+      "layer_digest": "sha256:d9a59ac3971856ed14e725dba3e6a905c7d548a3d8559a0a4579aadd5b140999",
       "operations": {
         "hooks": {
           "add": [],
@@ -249,20 +260,21 @@
     "general": {
       "chain": [
         "real-home",
+        "work",
         "general"
       ],
       "clients": {
         "codex": {
-          "tree_hash": "sha256:de2e357249c6f7758cd4c96feed67f3d512ea69a3e872fa98829f8d4467071c6"
+          "tree_hash": "sha256:a4718e9a657d0e7d361372262d8002e847855c63009f61a9bdaa6dfefa67ae2f"
         },
         "omp": {
-          "tree_hash": "sha256:b9dd5237432372b1e5f24942a1daf58aa2bf2f37084a2a8d8b976f43e649d431"
+          "tree_hash": "sha256:540f8036b6f02958afc538f46040b2efc0095c1e46438a64328d3d3142770a6b"
         },
         "qoder": {
-          "tree_hash": "sha256:7a2794c2ce2d07551ee2e6d3adde68e3d85522272932e4cc0e884212dfc3754e"
+          "tree_hash": "sha256:e2ea0bba721252fc8d30608d7b4a76c037ded004c84ab333a113216ad6636f28"
         }
       },
-      "extends": "real-home",
+      "extends": "work",
       "inventory": {
         "hooks": [],
         "mcps": [],
@@ -276,7 +288,7 @@
           "openspec-update-change"
         ]
       },
-      "layer_digest": "sha256:9b3bff3afcd84302748755fff4c0b28f90a351c786a49bfdb9962468faf8e46c",
+      "layer_digest": "sha256:d793f7f2e67c085454bbd6935839aa205b4a817c7e0bafc80fe1efe1e8e02752",
       "operations": {
         "hooks": {
           "add": [],
@@ -302,6 +314,53 @@
             "openspec-sync-specs",
             "openspec-archive-change"
           ],
+          "mask": [],
+          "replace": []
+        }
+      }
+    },
+    "work": {
+      "chain": [
+        "real-home",
+        "work"
+      ],
+      "clients": {
+        "codex": {
+          "tree_hash": "sha256:e2f4606134f3ef91801117037c44afe3ac5a102924f66809a9986420771f0eb7"
+        },
+        "omp": {
+          "tree_hash": "sha256:ffa4b1f770eefaf91c970c9baecead53c8855b19964cd58cd4dfacf33383c3f0"
+        },
+        "qoder": {
+          "tree_hash": "sha256:8564f5b174f64a1b2d39cc58dc8b011a2bb0754c685d61bc9a217e8de72a16db"
+        }
+      },
+      "extends": "real-home",
+      "inventory": {
+        "hooks": [],
+        "mcps": [],
+        "plugins": [],
+        "skills": []
+      },
+      "layer_digest": "sha256:8996e032075a35a172264e0726bd21095059fecc3ca0cc31d28c02d7f395c929",
+      "operations": {
+        "hooks": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "mcps": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "plugins": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "skills": {
+          "add": [],
           "mask": [],
           "replace": []
         }

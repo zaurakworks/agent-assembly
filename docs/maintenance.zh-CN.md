@@ -55,9 +55,9 @@ python3 tools/cap.py skills-validate
 # 2. 更新项目层 lock：只有声明内容确实改变时执行
 python3 tools/cap.py lock
 
-# 3. 项目层变化后重建两个 derived binding；不得自动刷新 base pin
+# 3. 项目层变化后重建 work 与两个 derived binding；不得自动刷新 base pin
 PROFILE_TOOL=../agent-control/tools/profile/profile.py
-for profile in general assembly-helper; do
+for profile in work general assembly-helper; do
   python3 "$PROFILE_TOOL" --project . bind \
     --profile "$profile" \
     --base-manifest "$HOME/.cap-user-state/locks/real-home.manifest.json" \

@@ -1,5 +1,5 @@
 version = 2
-extends = "real-home"
+extends = "work"
 prompt = ".cap/prompts/general.md"
 
 [skills]

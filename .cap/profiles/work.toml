@@ -1,0 +1,23 @@
+version = 2
+extends = "real-home"
+prompt = ".cap/prompts/work.md"
+
+[skills]
+add = []
+mask = []
+replace = []
+
+[mcps]
+add = []
+mask = []
+replace = []
+
+[hooks]
+add = []
+mask = []
+replace = []
+
+[plugins]
+add = []
+mask = []
+replace = []

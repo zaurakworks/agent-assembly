@@ -41,6 +41,7 @@ DEFAULT_BASE_PIN = DEFAULT_WORKSPACE_CONTROL / "real-home.pin.json"
 DEFAULT_BINDING_DIR = DEFAULT_WORKSPACE_CONTROL / "bindings"
 DEFAULT_AUTH_ROOT = DEFAULT_PROJECT.with_name(f"{DEFAULT_PROJECT.name}.auth")
 DEFAULT_PROFILE = "assembly-helper"
+RUNNABLE_PROFILES = ("assembly-helper", "general")
 CLIENTS = ("codex", "qoder", "omp")
 DEFAULT_CLI = "omp"
 SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -508,7 +509,8 @@ def _available_profiles(args: argparse.Namespace, env: dict[str, str]) -> list[s
         print(f"无法解析 profile 列表：{error}", file=sys.stderr)
         return []
     profiles = data.get("profiles", [])
-    return [item for item in profiles if isinstance(item, str)]
+    available = {item for item in profiles if isinstance(item, str)}
+    return [name for name in RUNNABLE_PROFILES if name in available]
 
 
 def _choose(label: str, choices: list[str], default: str) -> str:

@@ -2,7 +2,7 @@
 
 ### Requirement: 项目 profile 显式继承真实 HOME 基座
 
-`general` 与 `assembly-helper` SHALL 使用 version 2 profile，且 SHALL 通过单一 `extends = "real-home"` 链继承机器基座。项目层能力 SHALL 只通过每类能力的 `add`、`mask`、`replace` 操作表达；继承环、多个基座、隐式同名覆盖和不存在的 mask/replace 目标 SHALL 失败。
+`work`、`general` 与 `assembly-helper` SHALL 使用 version 2 profile。`work` SHALL `extends = "real-home"`；两个可运行 profile SHALL 分别 `extends = "work"`，形成单一 `real-home -> work -> derived` 链。项目层能力 SHALL 只通过每类能力的 `add`、`mask`、`replace` 操作表达；继承环、多个基座、隐式同名覆盖和不存在的 mask/replace 目标 SHALL 失败。
 
 #### Scenario: 项目层增加 Skill
 

@@ -13,7 +13,7 @@
 - 声明态、配置态和实际生效态分别有什么证据；
 - 外部仓库的能力如何经过评估后，最小、可逆地进入项目闭包。
 
-当前有两个显式 profile：通用工程 `general` 与装配专用 `assembly-helper`；未受 CAP 管理的客户端不属于任何 profile。
+当前有两个可运行 profile：通用工程 `general` 与装配专用 `assembly-helper`；两者经内部 `work` 层继承 `real-home`。未受 CAP 管理的客户端不属于任何 profile。
 
 ## 快速开始
 
@@ -40,7 +40,7 @@ python3 tools/cap.py skills-validate
 python3 tools/cap.py verify
 ```
 
-两个 profile 都显式 `extends = "real-home"`。客户端保留真实 `HOME`，Git、SSH、语言工具链和父级 `AGENTS.md` 继续按宿主环境工作；OMP 的配置与 Session 状态仍隔离在 `<project>.agent-homes/<profile>/omp`。项目层只用 `add`／`mask`／`replace` 改变基座能力，不复制整份用户目录。
+两个可运行 profile 都显式遵循 `real-home -> work -> derived` 链。客户端保留真实 `HOME`，Git、SSH、语言工具链和父级 `AGENTS.md` 继续按宿主环境工作；OMP 的配置与 Session 状态仍隔离在 `<project>.agent-homes/<profile>/omp`。各项目层只用 `add`／`mask`／`replace` 改变上层能力，不复制整份用户目录。
 
 裸 `cap` 只承担高频启动，不显示动作菜单。`cap show` 是独立查看入口；CLI 展开使用自动清理的临时 render，不启动客户端，也不要求输出目录。脚本应使用带完整参数的显式子命令。旧 `interactive` / `i` 已直接移除，不提供兼容别名或弃用期。
 
@@ -77,7 +77,7 @@ python3 "$PROFILE_TOOL" --project . base-approve \
   --manifest "$HOME/.cap-user-state/locks/real-home.manifest.json" \
   --pin "$HOME/work/_org/locks/agent-assembly-general/real-home.pin.json"
 
-for profile in general assembly-helper; do
+for profile in work general assembly-helper; do
   python3 "$PROFILE_TOOL" --project . bind \
     --profile "$profile" \
     --base-manifest "$HOME/.cap-user-state/locks/real-home.manifest.json" \
