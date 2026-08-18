@@ -11,6 +11,7 @@
 5. 调研、引入、升级或退役外部能力时，读 [`capability-lifecycle`](../.cap/capabilities/skills/capability-lifecycle/SKILL.md)。
 6. 需要建立基线、证明改善或检查回归时，读 [`agent-behavior-evaluation`](../.cap/capabilities/skills/agent-behavior-evaluation/SKILL.md)。
 7. 变更较大、需要 durable proposal/delta/design/tasks 时，读 [`spec-change-pack`](../.cap/capabilities/skills/spec-change-pack/SKILL.md)。
+8. 进入具体 OpenSpec 阶段时，按意图选择下面六个 `openspec-*` Workflow Skill；不要用 `spec-change-pack` 代替阶段入口。
 
 ## 当前 Skills
 
@@ -42,16 +43,52 @@
 
 使用仓库已授权的 OpenSpec 工作流组织较大的 Agent 行为变更。Proposal、delta、design、tasks/evidence 各自承担不同职责；规划不自动授权实施。
 
+### `openspec-explore`
+
+在实施或建立 change 前探索问题、边界和取舍；保持思考伙伴模式，不修改应用代码。
+
+### `openspec-propose`
+
+创建完整 planning package；完成 schema 要求的 proposal、delta specs、design 和 tasks 后停止，等待独立 Apply 请求。
+
+### `openspec-update-change`
+
+修订已有 change 的现存规划工件并保持相互一致；不创建缺失工件，不修改实现代码。
+
+### `openspec-apply-change`
+
+读取 change 当前工件和 apply instructions，逐项实施、验证并即时更新 tasks；不自动归档。
+
+### `openspec-sync-specs`
+
+按 Requirement 语义把 delta specs 合并到长期主规格，同时保留活动 change。
+
+### `openspec-archive-change`
+
+检查工件、tasks、规格和验证状态后，通过 OpenSpec CLI 完成同步和归档。
+
 ## 协作关系
 
 ```text
+OpenSpec 基础工作流
+    ├── openspec-explore
+    ├── openspec-propose
+    ├── openspec-update-change
+    ├── openspec-apply-change
+    ├── openspec-sync-specs
+    └── openspec-archive-change
+
+general
+    └── OpenSpec 基础工作流
+
 assembly-helper
     ├── agent-prompt-design
     ├── agent-skill-design
     ├── capability-lifecycle
     ├── agent-behavior-evaluation
     ├── capability-profile-closure
-    └── spec-change-pack
+    ├── spec-change-pack
+    └── OpenSpec 基础工作流
 ```
 
 这不是固定状态机。具体任务只加载必要 Skill，不为了“完整”串行执行全部流程。

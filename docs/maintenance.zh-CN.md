@@ -5,9 +5,10 @@
 ## 修改前
 
 1. 读 [`AGENTS.md`](../AGENTS.md) 和 [`README.md`](../README.md)。
-2. 读取当前 profile：
+2. 读取当前 profile。TTY 中可以先选择；脚本必须显式指定 profile：
 
    ```bash
+   python3 tools/cap.py show
    python3 tools/cap.py show assembly-helper
    ```
 
@@ -41,7 +42,7 @@ npx openspec instructions <artifact> --change <change-id> --json
 npx openspec validate <change-id> --strict --json
 ```
 
-供人阅读的 proposal、spec、design、tasks 正文使用中文，保留 OpenSpec 解析要求的英文结构关键字。初始化保持 `--tools none`；OpenSpec 只管理 `openspec/` 规划资产，不向 `.agents`、`.omp`、`.qoder` 生成 profile 外运行时能力。
+供人阅读的 proposal、spec、design、tasks 正文使用中文，保留 OpenSpec 解析要求的英文结构关键字。初始化保持 `--tools none`：OpenSpec CLI 管理 `openspec/` 规划资产；六个中文 Workflow Skill 合同由 `.cap` 显式声明，不向 `.agents`、`.omp`、`.qoder` 生成 profile 外运行时能力。
 
 ## 修改后
 
@@ -53,20 +54,24 @@ python3 tools/cap.py skills-validate
 
 # 2. 更新 lock：只有声明内容确实改变时执行
 python3 tools/cap.py \
-  --profile-tool ../agent-control/tools/profile/profile.py \
+  --profile-tool ../agent-control/tools/caprun/caprun.py \
   lock
 
 # 3. 检查元数据、闭包和 lock
 python3 tools/cap.py \
-  --profile-tool ../agent-control/tools/profile/profile.py \
+  --profile-tool ../agent-control/tools/caprun/caprun.py \
   verify
 
-# 4. 查看最终 profile inventory
+# 4. 查看最终公共 inventory，并展开一个 CLI 的真实目标文件树
 python3 tools/cap.py show assembly-helper
+python3 tools/cap.py show general
+python3 tools/cap.py show general --cli omp
 
 # 5. 验证活动 OpenSpec change
 npx openspec validate <change-id> --strict --json
 ```
+
+裸 `cap` 专用于高频启动；`cap show` 专用于查看。CLI 展开使用临时 render，只输出相对文件树和 tree hash，不启动客户端或保留临时目录。`run` 与带 `--output` 的 `render` 是参数完整、可在非 TTY 中执行的自动化接口。旧 `interactive` / `i` 不保留兼容层。当前只注册 Codex、Qoder、OMP；Claude adapter 延期到具备真实 CLI、render 和运行证据后实施，当前不得宣称支持。
 
 如果 `agent-control` 不在相邻目录，改成绝对路径。
 

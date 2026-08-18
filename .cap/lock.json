@@ -7,15 +7,15 @@
   },
   "clients": {
     "codex": {
-      "adapter_version": 7,
+      "adapter_version": 1,
       "executable": "codex"
     },
     "omp": {
-      "adapter_version": 7,
+      "adapter_version": 1,
       "executable": "omp"
     },
     "qoder": {
-      "adapter_version": 7,
+      "adapter_version": 1,
       "executable": "qoder"
     }
   },
@@ -83,6 +83,54 @@
       "sha256": "8febbda7a15e5f397a075e71adeff40af036e0f6cbbfbf3bdc30054fd397a9b0",
       "type": "file"
     },
+    ".cap/capabilities/skills/openspec-apply-change": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/openspec-apply-change/SKILL.md": {
+      "mode": "0644",
+      "sha256": "b7dc8c11395530ed5a6a5b15f87493b219fe85424dcc26125d7c99de132beb81",
+      "type": "file"
+    },
+    ".cap/capabilities/skills/openspec-archive-change": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/openspec-archive-change/SKILL.md": {
+      "mode": "0644",
+      "sha256": "59573906010bc0fe31ec4dee7ae2b715e65ba5cb183c152251d5af8cb0e49095",
+      "type": "file"
+    },
+    ".cap/capabilities/skills/openspec-explore": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/openspec-explore/SKILL.md": {
+      "mode": "0644",
+      "sha256": "f4e206e1db60da7bf1f14eaffff25427bba746c1b6e0bf4fc7b896bdec5d91cb",
+      "type": "file"
+    },
+    ".cap/capabilities/skills/openspec-propose": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/openspec-propose/SKILL.md": {
+      "mode": "0644",
+      "sha256": "c569c3f29cb846811401413c28332062b1268cb184fd5dbe3c675e1ef622ce15",
+      "type": "file"
+    },
+    ".cap/capabilities/skills/openspec-sync-specs": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/openspec-sync-specs/SKILL.md": {
+      "mode": "0644",
+      "sha256": "1c646841efd22cb6e26a0ca5b56484d36266a944e4b13f4c1b8e14d72613ad62",
+      "type": "file"
+    },
+    ".cap/capabilities/skills/openspec-update-change": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/openspec-update-change/SKILL.md": {
+      "mode": "0644",
+      "sha256": "e38e1a3d8b5c2cfebf2c845fddf918a2df36ac559370d6caff045b870630b15a",
+      "type": "file"
+    },
     ".cap/capabilities/skills/spec-change-pack": {
       "type": "directory"
     },
@@ -93,17 +141,27 @@
     },
     ".cap/manifest.toml": {
       "mode": "0644",
-      "sha256": "c6174248e456b0a978d8b26af3cb1664462e4fdfb56890342ecdb9d7eea13746",
+      "sha256": "8125f851098557aad224ed08b93f60b1adefc38d7a00b627936a8f41312423a3",
       "type": "file"
     },
     ".cap/profiles/assembly-helper.toml": {
       "mode": "0644",
-      "sha256": "6e9776894c426865f33c33a5d658235904280cb7882d9a76114e5a0354a7282a",
+      "sha256": "8d7eb2d65ebce22841688b1c4b2351da429f40b35ccc44111a1ef43724dcfdc8",
+      "type": "file"
+    },
+    ".cap/profiles/general.toml": {
+      "mode": "0644",
+      "sha256": "01e1abc7af4763cdb77624cc19d3543f67d74098c8c8b9db8a9a0421592a5f7b",
       "type": "file"
     },
     ".cap/prompts/assembly-helper.md": {
       "mode": "0644",
       "sha256": "dbce45e0c04383db91866ddc1a215518c58df0f913a043f79959ca3f429ab7dc",
+      "type": "file"
+    },
+    ".cap/prompts/general.md": {
+      "mode": "0644",
+      "sha256": "07a2c09ca3b66bc7b9ac1a9d5b0609bde07952dd09a4cc5e7cf87ef83a6f26b4",
       "type": "file"
     },
     "AGENTS.md": {
@@ -116,13 +174,13 @@
     "assembly-helper": {
       "clients": {
         "codex": {
-          "tree_hash": "sha256:326ea90219225918f9d232c1d1fa40cbbb01c275f139e81d00054555d071656e"
+          "tree_hash": "sha256:3d20f51c8b337d61337d4fdf5e2a434f35d1f5276510313b20b3e7ad5c91d118"
         },
         "omp": {
-          "tree_hash": "sha256:3ea37b145234862cb53dbed24b53cc74afede923557831dd5667c749aa07636f"
+          "tree_hash": "sha256:d0f2bb870704a7607dfd94dde1f26ef91e442843f87c270bc158d6ff3ee7b51d"
         },
         "qoder": {
-          "tree_hash": "sha256:c20d3b476f5e23839d9f77ffdd2f1022b28623eedc52260e258918a3386e0670"
+          "tree_hash": "sha256:ff283d4b8e2a23cf7af60fe32a38edabd49f30d4608956209b863734e2d4e2e8"
         }
       },
       "inventory": {
@@ -136,11 +194,43 @@
           "capability-profile-closure",
           "capability-lifecycle",
           "agent-behavior-evaluation",
-          "spec-change-pack"
+          "spec-change-pack",
+          "openspec-explore",
+          "openspec-propose",
+          "openspec-update-change",
+          "openspec-apply-change",
+          "openspec-sync-specs",
+          "openspec-archive-change"
+        ]
+      }
+    },
+    "general": {
+      "clients": {
+        "codex": {
+          "tree_hash": "sha256:b0450d89ee5bb59119ea61198c083d3bec435971c79c5d1eca7a3551fcdf2fad"
+        },
+        "omp": {
+          "tree_hash": "sha256:72ba5fa289c31a2d035d34e78523ca875b78933c19d378a8a221a4e2e5c4c9a8"
+        },
+        "qoder": {
+          "tree_hash": "sha256:e24f81cb9bd3488c47bfdbdf266be7b18b8ae5783baf7194960e034b71c19f4c"
+        }
+      },
+      "inventory": {
+        "hooks": [],
+        "mcps": [],
+        "plugins": [],
+        "skills": [
+          "openspec-explore",
+          "openspec-propose",
+          "openspec-update-change",
+          "openspec-apply-change",
+          "openspec-sync-specs",
+          "openspec-archive-change"
         ]
       }
     }
   },
-  "renderer_version": "profile-renderer-v1",
+  "renderer_version": "caprun-renderer-v1",
   "version": 1
 }
