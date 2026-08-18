@@ -146,6 +146,12 @@ Hook / Plugin 当前按 `opaque-staging` 处理；没有真实端加载证据时
 
 `agent-control`、`agent-plugins`、OpenSpec 以及其他仓库只提供可审查的模式和证据，不自动成为本仓运行时依赖。需要引入时，先经过 `capability-lifecycle`，再把最小能力复制或生成到当前 `.cap` 目录，并更新 profile 和 lock。
 
+## 评测实验
+
+- [`evaluations/llm-verifier/`](evaluations/llm-verifier/)：用固定 PyPI wheel
+  跑通候选排序、输入摘要隔离缓存、脱敏结构化 evidence 和失败关闭。确定性
+  fixture 只证明集成路径；没有真实模型 backend 证据时，模型质量保持 `unknown`。
+
 ## 仓库边界
 
 - 本仓：`general`、装配助手等项目内 profile、prompt、Skills 和验证证据。

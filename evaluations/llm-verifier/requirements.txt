@@ -1,0 +1,4 @@
+llm-verifier @ https://files.pythonhosted.org/packages/19/3e/a6ee4a258e048811c3061730b85bfe0e5cebaf5d9747bd1f7f65a5604f45/llm_verifier-0.2.0-py3-none-any.whl#sha256=5d1678c93d19874acd15999026117371c73367e3faac1712affe6dd7f38303af
+google-genai==2.18.1
+openai==3.2.0
+tqdm==4.70.0
