@@ -40,17 +40,80 @@ class VerifierEvaluationCLITest(unittest.TestCase):
         self.request_path = self.root / "request.json"
         self.cache_path = self.root / "cache.json"
 
-    def run_cli(self, document):
+    def run_cli(self, document, *, extra_args=None, extra_env=None):
         self.request_path.write_text(
             json.dumps(document, ensure_ascii=False), encoding="utf-8")
         env = dict(os.environ)
         env["PYTHONPATH"] = str(STUB)
+        env.update(extra_env or {})
+        command = [
+            sys.executable, str(SCRIPT), "run", "--request",
+            str(self.request_path), "--cache", str(self.cache_path),
+        ]
+        command.extend(extra_args or [])
         return subprocess.run(
-            [sys.executable, str(SCRIPT), "run", "--request",
-             str(self.request_path), "--cache", str(self.cache_path)],
+            command,
             cwd=ROOT, env=env, text=True, capture_output=True,
             encoding="utf-8", check=False,
         )
+
+    def make_fake_omp(self):
+        script = self.root / "fake_omp.py"
+        script.write_text(
+            """import json
+import os
+import sys
+
+if os.environ.get("FAKE_OMP_MODE") == "command-failure":
+    raise SystemExit(7)
+
+command = sys.argv[-1]
+prefix = "/agent-assembly-verifier "
+if not command.startswith(prefix):
+    raise SystemExit(8)
+request_path = command[len(prefix):]
+with open(request_path, encoding="utf-8") as request_file:
+    request = json.load(request_file)
+
+prompt = request["prompt"]
+def score(marker):
+    if "EXPECTED_PASS" in marker:
+        return "A"
+    if "EXPECTED_REJECT" in marker:
+        return "T"
+    return "K"
+
+trace_a = prompt.split("**Trajectory A:**\\n", 1)[1].split(
+    "\\n\\n**Trajectory B:**", 1)[0]
+trace_b = prompt.split("**Trajectory B:**\\n", 1)[1].split(
+    "\\n\\n**Rating Scale:**", 1)[0]
+text = f"<score_A> {score(trace_a)} </score_A>\\n<score_B> {score(trace_b)} </score_B>"
+if os.environ.get("FAKE_OMP_MODE") == "invalid-score":
+    text = "not a score"
+actual_model = os.environ.get("FAKE_OMP_MODEL", request["model"])
+result = {
+    "schema_version": "agent-assembly.omp-completion/v1",
+    "requested_model": request["model"],
+    "model": actual_model,
+    "stop_reason": "length" if os.environ.get("FAKE_OMP_MODE") == "non-stop" else "stop",
+    "usage": {
+        "input": 19,
+        "output": 6,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 25,
+        "cost": {"total": 0.00000434},
+    },
+    "text": text,
+}
+print("Working...")
+if os.environ.get("FAKE_OMP_MODE") == "fallback":
+    print('{"type":"retry_fallback_applied"}')
+print("__AGENT_ASSEMBLY_OMP_RESULT__" + json.dumps(result, separators=(",", ":")))
+""",
+            encoding="utf-8",
+        )
+        return script
 
     def test_receipt_reports_fresh_cached_and_changed_inputs_without_content(self):
         first = self.run_cli(request())
@@ -106,6 +169,130 @@ class VerifierEvaluationCLITest(unittest.TestCase):
         self.assertEqual(failure["error"]["code"], "INVALID_REQUEST")
         message = failure["error"]["message"].replace("\\\\", "\\")
         self.assertNotIn(str(self.root), message)
+
+    def test_omp_backend_uses_literal_scores_and_reports_serving_model(self):
+        document = request()
+        document["backend"] = {"kind": "omp", "model": "test/model"}
+        fake_omp = self.make_fake_omp()
+
+        result = self.run_cli(
+            document,
+            extra_args=["--omp-command", sys.executable, str(fake_omp)],
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        evidence = json.loads(result.stdout)
+        self.assertEqual(evidence["backend"], document["backend"])
+        self.assertEqual(evidence["scoring"], {
+            "mode": "literal",
+            "logprob_distribution": False,
+        })
+        self.assertEqual(evidence["serving_models"], ["test/model"])
+        self.assertEqual(evidence["ranking"][0], "pass")
+        self.assertTrue(any(
+            "OMP returns literal score tokens" in limitation
+            for limitation in evidence["limitations"]
+        ))
+        self.assertNotIn("EXPECTED_PASS", result.stdout)
+        self.assertNotIn(str(self.root), result.stdout)
+
+        cached = self.run_cli(
+            document,
+            extra_args=["--omp-command", sys.executable, str(fake_omp)],
+        )
+        self.assertEqual(cached.returncode, 0, cached.stderr)
+        cached_evidence = json.loads(cached.stdout)
+        self.assertEqual(cached_evidence["cache_status"], "cached")
+        self.assertEqual(cached_evidence["usage"]["calls"], 0)
+        self.assertEqual(cached_evidence["usage"]["reported_cost_usd"], 0.0)
+        self.assertEqual(cached_evidence["serving_models"], [])
+
+    def test_omp_backend_fails_closed_on_serving_model_mismatch(self):
+        document = request()
+        document["backend"] = {"kind": "omp", "model": "test/model"}
+        fake_omp = self.make_fake_omp()
+
+        result = self.run_cli(
+            document,
+            extra_args=["--omp-command", sys.executable, str(fake_omp)],
+            extra_env={"FAKE_OMP_MODEL": "other/model"},
+        )
+
+        self.assertEqual(result.returncode, 1)
+        evidence = json.loads(result.stdout)
+        self.assertEqual(evidence["error"], {
+            "code": "VERIFIER_FAILED",
+            "message": "OmpBackendError",
+        })
+        self.assertNotIn("other/model", result.stdout)
+
+    def test_omp_backend_fails_closed_on_invalid_literal_score(self):
+        document = request()
+        document["backend"] = {"kind": "omp", "model": "test/model"}
+        fake_omp = self.make_fake_omp()
+
+        result = self.run_cli(
+            document,
+            extra_args=["--omp-command", sys.executable, str(fake_omp)],
+            extra_env={"FAKE_OMP_MODE": "invalid-score"},
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)["error"], {
+            "code": "VERIFIER_FAILED",
+            "message": "OmpBackendError",
+        })
+
+    def test_omp_backend_fails_closed_on_command_failure(self):
+        document = request()
+        document["backend"] = {"kind": "omp", "model": "test/model"}
+        fake_omp = self.make_fake_omp()
+
+        result = self.run_cli(
+            document,
+            extra_args=["--omp-command", sys.executable, str(fake_omp)],
+            extra_env={"FAKE_OMP_MODE": "command-failure"},
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)["error"], {
+            "code": "VERIFIER_FAILED",
+            "message": "OmpBackendError",
+        })
+
+    def test_omp_backend_fails_closed_on_fallback_evidence(self):
+        document = request()
+        document["backend"] = {"kind": "omp", "model": "test/model"}
+        fake_omp = self.make_fake_omp()
+
+        result = self.run_cli(
+            document,
+            extra_args=["--omp-command", sys.executable, str(fake_omp)],
+            extra_env={"FAKE_OMP_MODE": "fallback"},
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)["error"], {
+            "code": "VERIFIER_FAILED",
+            "message": "OmpBackendError",
+        })
+
+    def test_omp_backend_fails_closed_on_non_stop_completion(self):
+        document = request()
+        document["backend"] = {"kind": "omp", "model": "test/model"}
+        fake_omp = self.make_fake_omp()
+
+        result = self.run_cli(
+            document,
+            extra_args=["--omp-command", sys.executable, str(fake_omp)],
+            extra_env={"FAKE_OMP_MODE": "non-stop"},
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)["error"], {
+            "code": "VERIFIER_FAILED",
+            "message": "OmpBackendError",
+        })
 
 
 if __name__ == "__main__":

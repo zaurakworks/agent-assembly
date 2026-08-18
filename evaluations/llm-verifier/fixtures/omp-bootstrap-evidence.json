@@ -1,0 +1,35 @@
+{
+  "schema_version": "agent-assembly.verifier-request/v1",
+  "run_id": "bootstrap-evidence-omp",
+  "problem": "Judge whether the deployment evidence is sufficient.",
+  "candidates": [
+    {
+      "id": "pass",
+      "trajectory": "EXPECTED_PASS: Project, Issue, Project item, validation check, and unmerged PR all have matching readback evidence."
+    },
+    {
+      "id": "reject",
+      "trajectory": "EXPECTED_REJECT: The agent claims success but provides no resource URLs or readback evidence."
+    },
+    {
+      "id": "unknown",
+      "trajectory": "EXPECTED_UNKNOWN: A Project URL exists, but Issue, Project item, validation, and PR evidence are missing."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "evidence_quality",
+      "name": "Evidence quality",
+      "description": "Prefer complete, directly reproducible evidence; reject unsupported success claims and treat missing evidence as uncertain."
+    }
+  ],
+  "backend": {
+    "kind": "omp",
+    "model": "deepseek/deepseek-v4-flash"
+  },
+  "parameters": {
+    "n_evaluations": 2,
+    "pivots": 1,
+    "seed": 0
+  }
+}

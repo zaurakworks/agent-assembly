@@ -35,6 +35,17 @@ def select(problem, candidates, *, criteria, cache, **kwargs):
         pass
     if cached_identity != identity:
         _calls += 2
+        client = kwargs.get("client")
+        if client is not None:
+            prompt = (
+                f"**Trajectory A:**\n{candidates[0]}\n\n"
+                f"**Trajectory B:**\n{candidates[1]}\n\n"
+                "**Rating Scale:**\nReturn score tags."
+            )
+            contents = [SimpleNamespace(parts=[SimpleNamespace(text=prompt)])]
+            for _ in range(2):
+                client.models.generate_content(
+                    model=kwargs.get("model"), contents=contents)
         with open(cache, "w", encoding="utf-8") as cache_file:
             json.dump({"identity": identity}, cache_file)
     order = sorted(
