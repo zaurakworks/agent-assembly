@@ -3,7 +3,7 @@ extends = "work"
 prompt = ".cap/prompts/general.md"
 
 [skills]
-add = ["openspec-explore", "openspec-propose", "openspec-update-change", "openspec-apply-change", "openspec-sync-specs", "openspec-archive-change"]
+add = []
 mask = []
 replace = []
 

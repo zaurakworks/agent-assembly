@@ -146,17 +146,17 @@
     },
     ".cap/profiles/assembly-helper.toml": {
       "mode": "0644",
-      "sha256": "2f1b49ab837e0b9c9560c4acc9fc2ca8fbb3fd0604d25d9fe54ad66d70d97d76",
+      "sha256": "8912337beff08c87356a3c0584acbc6781168c426821f56e1d7f7ff62d5aa02e",
       "type": "file"
     },
     ".cap/profiles/general.toml": {
       "mode": "0644",
-      "sha256": "935659621badd3b26797bb6811d44d1f0226a819197e5dad07632c11dc3bf504",
+      "sha256": "9be9d99995b13ea0afe59ce76944059a8ab7022b9274c8c35ffef73693c98c96",
       "type": "file"
     },
     ".cap/profiles/work.toml": {
       "mode": "0644",
-      "sha256": "4e3492d9e2c34622e093c0839d6b1fc10b9fa898ee9b587d6d0f4c08b35117cd",
+      "sha256": "8b3757acdfe254325a4dabcd40c9b39a4ac66bbd7c3157c3183356606b76a66d",
       "type": "file"
     },
     ".cap/prompts/assembly-helper.md": {
@@ -171,7 +171,7 @@
     },
     ".cap/prompts/work.md": {
       "mode": "0644",
-      "sha256": "f0804547ac1ac8c8bb953fdfd862d1a801dbe4f1f79afa1afc9460b58d7f98ec",
+      "sha256": "fa7063785f31282d5b69a09a829363a5763a301a9cd48f60a459d2ba0774f0f9",
       "type": "file"
     },
     "AGENTS.md": {
@@ -219,7 +219,7 @@
           "spec-change-pack"
         ]
       },
-      "layer_digest": "sha256:d9a59ac3971856ed14e725dba3e6a905c7d548a3d8559a0a4579aadd5b140999",
+      "layer_digest": "sha256:08c84b0370e16f4c910138036832b404f9821dece8d43f0658f7b75fec938b51",
       "operations": {
         "hooks": {
           "add": [],
@@ -244,13 +244,7 @@
             "capability-profile-closure",
             "capability-lifecycle",
             "agent-behavior-evaluation",
-            "spec-change-pack",
-            "openspec-explore",
-            "openspec-propose",
-            "openspec-update-change",
-            "openspec-apply-change",
-            "openspec-sync-specs",
-            "openspec-archive-change"
+            "spec-change-pack"
           ],
           "mask": [],
           "replace": []
@@ -288,7 +282,61 @@
           "openspec-update-change"
         ]
       },
-      "layer_digest": "sha256:d793f7f2e67c085454bbd6935839aa205b4a817c7e0bafc80fe1efe1e8e02752",
+      "layer_digest": "sha256:c9beecab11a2fbe9f0fb3b4a57a42e5b152caa98e3c175c094ee3eda4b8d3cad",
+      "operations": {
+        "hooks": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "mcps": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "plugins": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        },
+        "skills": {
+          "add": [],
+          "mask": [],
+          "replace": []
+        }
+      }
+    },
+    "work": {
+      "chain": [
+        "real-home",
+        "work"
+      ],
+      "clients": {
+        "codex": {
+          "tree_hash": "sha256:440bdd54f452fd0a35a4fc69e39e90d5dd723f5633062e56edb86bc341629984"
+        },
+        "omp": {
+          "tree_hash": "sha256:0f726f1c56fe21e7319f34e936457fc76872a30efa453e4b87aba2891064ef7b"
+        },
+        "qoder": {
+          "tree_hash": "sha256:a074af51d5b63ff6bf8ba2b09b8cd0973463ea998875716cd36c7c9c8d4b062c"
+        }
+      },
+      "extends": "real-home",
+      "inventory": {
+        "hooks": [],
+        "mcps": [],
+        "plugins": [],
+        "skills": [
+          "openspec-apply-change",
+          "openspec-archive-change",
+          "openspec-explore",
+          "openspec-propose",
+          "openspec-sync-specs",
+          "openspec-update-change"
+        ]
+      },
+      "layer_digest": "sha256:f4430e859a508985c7bb484d1d1557e2251a33d598ac3cc510e363b1e3d8f2bd",
       "operations": {
         "hooks": {
           "add": [],
@@ -314,53 +362,6 @@
             "openspec-sync-specs",
             "openspec-archive-change"
           ],
-          "mask": [],
-          "replace": []
-        }
-      }
-    },
-    "work": {
-      "chain": [
-        "real-home",
-        "work"
-      ],
-      "clients": {
-        "codex": {
-          "tree_hash": "sha256:e2f4606134f3ef91801117037c44afe3ac5a102924f66809a9986420771f0eb7"
-        },
-        "omp": {
-          "tree_hash": "sha256:ffa4b1f770eefaf91c970c9baecead53c8855b19964cd58cd4dfacf33383c3f0"
-        },
-        "qoder": {
-          "tree_hash": "sha256:8564f5b174f64a1b2d39cc58dc8b011a2bb0754c685d61bc9a217e8de72a16db"
-        }
-      },
-      "extends": "real-home",
-      "inventory": {
-        "hooks": [],
-        "mcps": [],
-        "plugins": [],
-        "skills": []
-      },
-      "layer_digest": "sha256:8996e032075a35a172264e0726bd21095059fecc3ca0cc31d28c02d7f395c929",
-      "operations": {
-        "hooks": {
-          "add": [],
-          "mask": [],
-          "replace": []
-        },
-        "mcps": {
-          "add": [],
-          "mask": [],
-          "replace": []
-        },
-        "plugins": {
-          "add": [],
-          "mask": [],
-          "replace": []
-        },
-        "skills": {
-          "add": [],
           "mask": [],
           "replace": []
         }

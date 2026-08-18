@@ -14,6 +14,11 @@
 - **WHEN** profile 以 `add` 声明项目内 Skill，且基座和上层不存在同名能力
 - **THEN** 最终项目层 inventory SHALL 包含该 Skill
 
+#### Scenario: Derived profile 继承 work 共享能力
+
+- **WHEN** `work` 以 `add` 声明共享 OpenSpec Skills，且 `general` 的 Skill `add` 为空
+- **THEN** `general` 最终 inventory SHALL 包含这些共享 Skills，并 SHALL 保留 `real-home -> work -> general` 链
+
 #### Scenario: 同名能力未声明替换
 
 - **WHEN** `add` 名称与已审批基座或上层能力重名
