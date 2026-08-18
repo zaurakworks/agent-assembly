@@ -2,3 +2,4 @@ version = 1
 
 [profiles]
 assembly-helper = ".cap/profiles/assembly-helper.toml"
+general = ".cap/profiles/general.toml"

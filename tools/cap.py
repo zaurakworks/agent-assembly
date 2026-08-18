@@ -22,10 +22,14 @@ def _default_profile_tool() -> Path:
     configured = os.environ.get("AGENT_CONTROL_PROFILE_TOOL")
     if configured:
         return Path(configured)
-    sibling = DEFAULT_PROJECT.parent / "agent-control" / "tools" / "profile" / "profile.py"
-    if sibling.is_file():
-        return sibling
-    return Path("profile.py")
+    candidates = (
+        DEFAULT_PROJECT.parent / "agent-control" / "tools" / "caprun" / "caprun.py",
+        DEFAULT_PROJECT.parent / "agent-control" / "tools" / "profile" / "profile.py",
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return Path("caprun.py")
 
 
 DEFAULT_PROFILE_TOOL = _default_profile_tool()
@@ -36,6 +40,7 @@ DEFAULT_PROFILE = "assembly-helper"
 CLIENTS = ("codex", "qoder", "omp")
 DEFAULT_CLI = "omp"
 SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+CAPABILITY_KINDS = ("skills", "mcp", "hooks", "plugins")
 
 
 def _decode_frontmatter_scalar(raw: str, path: Path, line: int) -> str:
@@ -134,21 +139,31 @@ AMBIENT_CONFIG_ENV = {
 }
 
 
+class _CapArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        if "invalid choice: 'i'" in message or "invalid choice: 'interactive'" in message:
+            message = f"{message}\n旧 interactive / i 已移除；请使用裸 cap"
+        super().error(message)
+
+
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = _CapArgumentParser(
         prog="cap",
-        description="查看和使用显式 Agent profile；默认使用隔离且持久的 agent home，避免继承真实 HOME 的隐式能力。",
+        description="裸 cap 启动显式 Agent profile；cap show 查看能力闭包和 CLI 装配。",
         epilog=(
-            "常用示例：\n"
-            "  cap agents\n"
-            "  cap show assembly-helper\n"
-            "  cap clients\n"
-            "  cap interactive\n"
-            "  cap use assembly-helper\n"
-            "  cap use assembly-helper -- --version\n"
+            "高频使用：\n"
+            "  cap\n"
+            "\n"
+            "独立查看：\n"
+            "  cap show\n"
+            "  cap show general\n"
+            "  cap show general --cli omp\n"
+            "\n"
+            "显式自动化：\n"
             "  cap run assembly-helper -- -p \"帮我装配一个 review-agent\"\n"
+            "  cap render assembly-helper --cli omp --output /tmp/rendered-cap\n"
+            "  cap verify\n"
             "  cap skills-validate\n"
-            "  cap render assembly-helper --output /tmp/rendered-cap\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -181,14 +196,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--profile-tool",
         default=str(DEFAULT_PROFILE_TOOL),
         metavar="文件",
-        help="agent-control 的 tools/profile/profile.py 路径",
+        help="agent-control 的 caprun.py 或旧 profile.py 路径",
     )
 
     subparsers = parser.add_subparsers(
         dest="command",
         metavar="命令",
         title="命令",
-        description="查看 profile，或选择 profile 与 CLI 来使用。",
+        description="裸 cap 用于高频启动；子命令用于查看、校验和自动化。",
     )
 
     skills_validate = subparsers.add_parser(
@@ -219,28 +234,22 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     clients.set_defaults(profile_tool_command="clients")
 
-    interactive = subparsers.add_parser(
-        "interactive",
-        aliases=("i",),
-        help="交互式选择 profile、CLI 和动作",
-        description="通过提示选择 profile、目标 CLI，以及交互启动、批处理运行或渲染。",
-    )
-    interactive.set_defaults(profile_tool_command="interactive")
 
     show = subparsers.add_parser(
         "show",
         aliases=("explain",),
-        help="查看一个 profile 的能力闭包",
-        description="查看 profile 的 prompt、skills、MCP、hooks、plugins 与各 CLI 渲染 hash。",
+        help="查看 profile 的公共闭包或 CLI 装配",
+        description="先查看 prompt、skills、MCP、hooks、plugins 与各 CLI hash；可选展开一个 CLI 的真实目标文件树。",
     )
-    show.add_argument("profile", nargs="?", default=DEFAULT_PROFILE, help="profile 名；默认 assembly-helper")
+    show.add_argument("profile", nargs="?", default=None, help="profile 名；省略时在 TTY 中选择")
+    show.add_argument("--cli", choices=CLIENTS, help="展开指定客户端的真实装配")
     show.set_defaults(profile_tool_command="explain")
 
     use = subparsers.add_parser(
         "use",
         aliases=("launch",),
-        help="使用 profile 启动一个 CLI",
-        description="选择 profile 和目标 CLI，在当前工作目录中用持久 agent home 启动交互式客户端。",
+        help="显式使用 profile 启动一个 CLI",
+        description="显式指定 profile 和目标 CLI，在当前工作目录中用持久 agent home 启动客户端。",
     )
     use.add_argument("profile", nargs="?", default=DEFAULT_PROFILE, help="profile 名；默认 assembly-helper")
     use.add_argument("--cli", default=DEFAULT_CLI, choices=CLIENTS, help="要启动的客户端 CLI；默认 omp")
@@ -325,6 +334,9 @@ def _base_args(args: argparse.Namespace) -> list[str]:
         str(Path(args.project).expanduser()),
     ]
 
+def _uses_caprun(args: argparse.Namespace) -> bool:
+    return Path(args.profile_tool).name == "caprun.py"
+
 
 def _run_path(args: argparse.Namespace, suffix: str) -> str:
     root = Path(args.project).expanduser()
@@ -356,7 +368,7 @@ def _profile_args(args: argparse.Namespace) -> list[str]:
     if command == "materialize":
         return [
             *base,
-            "materialize",
+            "render" if _uses_caprun(args) else "materialize",
             "--client",
             args.cli,
             "--profile",
@@ -369,6 +381,19 @@ def _profile_args(args: argparse.Namespace) -> list[str]:
             _run_path(args, "receipt.json")
         )
         receipt.parent.mkdir(parents=True, exist_ok=True)
+        if _uses_caprun(args):
+            return [
+                *base,
+                "run",
+                "--client",
+                args.cli,
+                "--profile",
+                args.profile,
+                "--receipt",
+                str(receipt),
+                "--",
+                *_passthrough(args.client_args),
+            ]
         return [
             *base,
             "launch",
@@ -386,6 +411,19 @@ def _profile_args(args: argparse.Namespace) -> list[str]:
     if command == "run":
         state = args.state or _run_path(args, "state")
         Path(state).mkdir(parents=True, exist_ok=True)
+        if _uses_caprun(args):
+            return [
+                *base,
+                "run",
+                "--client",
+                args.cli,
+                "--profile",
+                args.profile,
+                "--receipt",
+                str(Path(state) / "receipt.json"),
+                "--",
+                *_passthrough(args.client_args),
+            ]
         return [
             *base,
             "run",
@@ -480,39 +518,122 @@ def _choose(label: str, choices: list[str], default: str) -> str:
         print(f"无效选择：{raw}")
 
 
-def _interactive(args: argparse.Namespace, env: dict[str, str]) -> int:
+def _require_tty(label: str, explicit_example: str) -> bool:
+    if sys.stdin.isatty() and sys.stdout.isatty():
+        return True
+    print(
+        f"{label} 需要交互式 stdin/stdout；非交互调用请使用：{explicit_example}",
+        file=sys.stderr,
+    )
+    return False
+
+
+def _interactive_use(args: argparse.Namespace, env: dict[str, str]) -> int:
     profiles = _available_profiles(args, env)
     if not profiles:
         print("没有可用 profile。", file=sys.stderr)
         return 2
     profile_default = DEFAULT_PROFILE if DEFAULT_PROFILE in profiles else profiles[0]
-    profile = _choose("profile", profiles, profile_default)
-    cli = _choose("CLI", list(CLIENTS), DEFAULT_CLI)
-    action = _choose("动作", ["use", "run", "render"], "use")
-
-    args.profile = profile
-    args.cli = cli
+    args.profile = _choose("profile", profiles, profile_default)
+    args.cli = _choose("CLI", list(CLIENTS), DEFAULT_CLI)
+    extra = input("客户端参数（可空；例如 --version）: ").strip()
+    args.client_args = shlex.split(extra) if extra else []
     args.receipt = None
-    args.state = None
     args.workdir = None
-    args.output = None
     args.fresh = False
-    if action == "render":
-        output = input("渲染输出目录（必须是已存在空目录）: ").strip()
-        if not output:
-            print("render 需要输出目录。", file=sys.stderr)
-            return 2
-        args.output = output
-        args.profile_tool_command = "materialize"
-    else:
-        extra = input("客户端参数（可空；例如 --version；run 必填）: ").strip()
-        args.client_args = shlex.split(extra) if extra else []
-        if action == "run" and not args.client_args:
-            print("run 需要客户端 batch 参数。", file=sys.stderr)
-            return 2
-        args.profile_tool_command = "launch" if action == "use" else "run"
-
+    args.profile_tool_command = "launch"
     return _run_selected(args, env)
+
+
+def _profile_json(args: argparse.Namespace, env: dict[str, str], stage: str) -> dict[str, object] | None:
+    try:
+        completed = subprocess.run(
+            _profile_args(args),
+            capture_output=True,
+            check=False,
+            env=env,
+            text=True,
+        )
+    except OSError as error:
+        print(f"{stage} 失败：{error}", file=sys.stderr)
+        return None
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or completed.stdout.strip() or f"退出码 {completed.returncode}"
+        print(f"{stage} 失败：{detail}", file=sys.stderr)
+        return None
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        print(f"{stage} 输出解析失败：{error}", file=sys.stderr)
+        return None
+    if not isinstance(payload, dict):
+        print(f"{stage} 输出解析失败：顶层必须是 JSON object", file=sys.stderr)
+        return None
+    return payload
+
+
+def _render_preview(args: argparse.Namespace, env: dict[str, str]) -> dict[str, object] | None:
+    try:
+        with tempfile.TemporaryDirectory(prefix=f"cap-show-{args.profile}-{args.cli}-") as temporary:
+            preview_args = argparse.Namespace(**vars(args))
+            preview_args.profile_tool_command = "materialize"
+            preview_args.output = temporary
+            rendered = _profile_json(preview_args, env, "render")
+            if rendered is None:
+                return None
+            tree_hash = rendered.get("tree_hash")
+            if not isinstance(tree_hash, str):
+                print("render 输出解析失败：缺少字符串 tree_hash", file=sys.stderr)
+                return None
+            root = Path(temporary)
+            files = sorted(
+                path.relative_to(root).as_posix()
+                for path in root.rglob("*")
+                if path.is_file()
+            )
+            return {
+                "client": args.cli,
+                "files": files,
+                "tree_hash": tree_hash,
+            }
+    except OSError as error:
+        print(f"目标文件枚举失败：{error}", file=sys.stderr)
+        return None
+
+
+def _show(args: argparse.Namespace, env: dict[str, str]) -> int:
+    interactive = args.profile is None
+    if interactive:
+        profiles = _available_profiles(args, env)
+        if not profiles:
+            print("没有可用 profile。", file=sys.stderr)
+            return 2
+        profile_default = DEFAULT_PROFILE if DEFAULT_PROFILE in profiles else profiles[0]
+        args.profile = _choose("profile", profiles, profile_default)
+
+    explanation = _profile_json(args, env, "explain")
+    if explanation is None:
+        return 2
+
+    if interactive:
+        print(json.dumps(explanation, ensure_ascii=False, indent=2))
+        selected = _choose("CLI 装配", ["不展开", *CLIENTS], "不展开")
+        if selected == "不展开":
+            return 0
+        args.cli = selected
+        preview = _render_preview(args, env)
+        if preview is None:
+            return 2
+        print(json.dumps({"preview": preview}, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.cli:
+        preview = _render_preview(args, env)
+        if preview is None:
+            return 2
+        explanation["preview"] = preview
+    print(json.dumps(explanation, ensure_ascii=False, indent=2))
+    return 0
 
 
 def _render_for_agent_home(args: argparse.Namespace, env: dict[str, str], agent_home: Path) -> str:
@@ -521,7 +642,7 @@ def _render_for_agent_home(args: argparse.Namespace, env: dict[str, str], agent_
         completed = subprocess.run(
             [
                 *_base_args(args),
-                "materialize",
+                "render" if _uses_caprun(args) else "materialize",
                 "--client",
                 args.cli,
                 "--profile",
@@ -641,6 +762,13 @@ def _run_selected(args: argparse.Namespace, env: dict[str, str]) -> int:
     completed = subprocess.run(_profile_args(args), env=env, check=False)
     return completed.returncode
 
+def _ensure_capability_store_dirs(project: Path) -> None:
+    capabilities = project / ".cap" / "capabilities"
+    if not capabilities.is_dir():
+        return
+    for kind in CAPABILITY_KINDS:
+        (capabilities / kind).mkdir(exist_ok=True)
+
 
 def main(argv: list[str] | None = None) -> int:
     raw_args = list(sys.argv[1:] if argv is None else argv)
@@ -650,16 +778,25 @@ def main(argv: list[str] | None = None) -> int:
         passthrough = raw_args[separator + 1 :]
         raw_args = raw_args[:separator]
     parser = _build_parser()
-    if not raw_args:
-        parser.print_help()
-        return 0
     args = parser.parse_args(raw_args)
     if hasattr(args, "profile_tool_command") and args.profile_tool_command in {"launch", "run"}:
         args.client_args = passthrough
+    if args.command is None and not _require_tty(
+        "裸 cap",
+        "cap use <profile> --cli <client> [-- <客户端参数>]",
+    ):
+        return 2
+    if (
+        getattr(args, "profile_tool_command", None) == "explain"
+        and args.profile is None
+        and not _require_tty("cap show", "cap show <profile> [--cli <client>]")
+    ):
+        return 2
     if args.command == "skills-validate":
         report = _skill_metadata_report(Path(args.project).expanduser().resolve())
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report["standard_conformance"] == "ok" else 2
+    _ensure_capability_store_dirs(Path(args.project).expanduser().resolve())
     if getattr(args, "profile_tool_command", None) == "verify":
         report = _skill_metadata_report(Path(args.project).expanduser().resolve())
         if report["standard_conformance"] != "ok":
@@ -676,13 +813,15 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(args, "profile_tool_command", None) == "agents":
         print(json.dumps({"agents": _available_profiles(args, env)}, ensure_ascii=False, indent=2))
         return 0
-    if getattr(args, "profile_tool_command", None) == "interactive":
-        return _interactive(args, env)
+    if args.command is None:
+        return _interactive_use(args, env)
+    if getattr(args, "profile_tool_command", None) == "explain":
+        return _show(args, env)
     if getattr(args, "profile_tool_command", None) == "run" and not args.client_args:
         print(
             "cap run 需要在 -- 后提供客户端 batch 参数；否则目标 CLI 可能进入交互/恢复等待，看起来像卡住。\n"
             "示例：cap run assembly-helper -- -p \"帮我装配一个 review-agent\"\n"
-            "如果要交互式启动，请用：cap use assembly-helper",
+            "如果要交互式启动，请使用裸 cap",
             file=sys.stderr,
         )
         return 2

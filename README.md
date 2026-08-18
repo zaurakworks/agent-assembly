@@ -1,6 +1,6 @@
 # agent-assembly
 
-用于维护 **Agent 装配助手（assembly-helper）** 的项目内能力声明、提示词、Skills 与验证证据。
+用于维护项目内显式 Agent profiles、提示词、Skills 与验证证据；当前包含通用工程 `general` 和 Agent 装配 `assembly-helper`。
 
 本仓库面向中文使用者。快速迭代阶段，`.cap/capabilities/skills/*/SKILL.md` 的中文正文是唯一执行合同；不维护需要逐项同步的另一语言全文镜像。
 
@@ -8,32 +8,43 @@
 
 它不是通用 Plugin Marketplace，也不是用户级配置仓库。它只回答：
 
-- 当前装配 Agent 是什么目标、边界和输出格式；
+- 当前 Agent profiles 分别是什么目标、边界和输出格式；
 - 哪些 prompt / skills / MCP / hooks / plugins 被显式声明；
 - 声明态、配置态和实际生效态分别有什么证据；
 - 外部仓库的能力如何经过评估后，最小、可逆地进入项目闭包。
 
-当前只有一个 profile：`assembly-helper`。
+当前有两个显式 profile：通用工程 `general` 与装配专用 `assembly-helper`；未受 CAP 管理的客户端不属于任何 profile。
 
 ## 快速开始
 
 从仓库根目录执行：
 
 ```bash
+# 高频使用：选择 profile、CLI 和可选客户端参数后直接启动
+python3 tools/cap.py
+
+# 独立查看：TTY 中选择 profile，先看公共闭包，再决定是否展开一个 CLI
+python3 tools/cap.py show
+
+# 非交互查看公共闭包，或直接展开 OMP 的真实目标文件树
+python3 tools/cap.py show general
+python3 tools/cap.py show general --cli omp
+
 # 查看可用 Agent
 python3 tools/cap.py agents
-
-# 查看 profile 的能力闭包和三端 tree hash
-python3 tools/cap.py show assembly-helper
 
 # 校验 Agent Skills 标准元数据
 python3 tools/cap.py skills-validate
 
 # 校验 Skill 元数据、manifest、profile、prompt、能力闭包与 lock
 python3 tools/cap.py \
-  --profile-tool ../agent-control/tools/profile/profile.py \
+  --profile-tool ../agent-control/tools/caprun/caprun.py \
   verify
 ```
+
+裸 `cap` 只承担高频启动，不显示动作菜单。`cap show` 是独立查看入口；CLI 展开使用自动清理的临时 render，不启动客户端，也不要求输出目录。脚本应使用带完整参数的显式子命令。旧 `interactive` / `i` 已直接移除，不提供兼容别名或弃用期。
+
+当前客户端注册表只有 Codex、Qoder 和 OMP。Claude 尚无本仓可运行、可渲染并经过验证的 adapter，因此当前不属于支持范围；后续在有真实 Claude CLI 的机器完成 adapter 与运行验证后再接入。
 
 OpenSpec 作为仓库内开发依赖，通过 `npx` 使用：
 
@@ -49,7 +60,7 @@ npx openspec validate --all --strict
 
 ```bash
 python3 tools/cap.py \
-  --profile-tool /path/to/agent-control/tools/profile/profile.py \
+  --profile-tool /path/to/agent-control/tools/caprun/caprun.py \
   verify
 ```
 
@@ -60,12 +71,20 @@ python3 tools/cap.py run assembly-helper --cli omp -- \
   -p "只输出：SKILLS-AVAILABLE: <skills>"
 ```
 
+恢复既有 OMP Session，并在新的运行实例中装配 `general`：
+
+```bash
+python3 tools/cap.py use general --cli omp -- --resume <session-id-or-path>
+```
+
+跨隔离 agent home 时优先使用 Session 文件路径；`--` 后参数由 CAP 原样交给 OMP。
+
 ## 我应该先读什么
 
 | 目的 | 入口 |
 |---|---|
 | 了解仓库边界 | [`AGENTS.md`](AGENTS.md) |
-| 了解当前 Agent | [`.cap/prompts/assembly-helper.md`](.cap/prompts/assembly-helper.md) |
+| 了解通用与装配 Agent | [`.cap/prompts/general.md`](.cap/prompts/general.md)、[`.cap/prompts/assembly-helper.md`](.cap/prompts/assembly-helper.md) |
 | 看中文 Skill 目录 | [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md) |
 | 了解如何修改和验收 | [`docs/maintenance.zh-CN.md`](docs/maintenance.zh-CN.md) |
 | 查看机器可核验闭包 | [`.cap/lock.json`](.cap/lock.json) |
@@ -84,6 +103,12 @@ python3 tools/cap.py run assembly-helper --cli omp -- \
 | `capability-lifecycle` | 调研、评估、引入、升级和退役外部能力 |
 | `agent-behavior-evaluation` | 建立行为基线、正反场景和可比较运行证据 |
 | `spec-change-pack` | 用 OpenSpec 组织较大的行为变更和长期审计证据 |
+| `openspec-explore` | 实施或建 change 前探索问题、边界与取舍 |
+| `openspec-propose` | 创建完整 Proposal、delta specs、design 与 tasks |
+| `openspec-update-change` | 修订已有 change 的现存规划工件并保持一致 |
+| `openspec-apply-change` | 按已有 change 实施任务并逐项验证 |
+| `openspec-sync-specs` | 把 delta specs 合并到长期主规格而不归档 |
+| `openspec-archive-change` | 校验、同步并归档已完成 change |
 
 ## 三态语义
 
@@ -101,10 +126,10 @@ Hook / Plugin 当前按 `opaque-staging` 处理；没有真实端加载证据时
 
 ## 仓库边界
 
-- 本仓：装配助手的项目内 profile、prompt、Skills 和验证证据。
+- 本仓：`general`、装配助手等项目内 profile、prompt、Skills 和验证证据。
 - `agent-control`：公共规则、profile 工具、schema、lock/render/probe 验证实现。
 - `agent-plugins`：跨任务、跨客户端可安装的 runtime Skill / Plugin 资产。
-- `@fission-ai/openspec`：仓库内固定版本的 spec-driven 规划工具；只维护 `openspec/` 资产，不生成 profile 外运行时能力。
+- `@fission-ai/openspec`：仓库内固定为 1.9.0 的 spec-driven CLI；规划资产位于 `openspec/`，六个中文 Workflow Skill 合同显式 vendoring 到 `.cap`，不生成 profile 外客户端目录。
 
 ## License
 
