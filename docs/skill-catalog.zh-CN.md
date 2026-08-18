@@ -1,104 +1,57 @@
-# Skill 目录（中文说明）
+# Skill 目录
 
-每个运行时 Skill 都有两个入口：
-
-- 英文 [`SKILL.md`](../.cap/capabilities/skills/)，是唯一执行合同；
-- `docs/skills/<name>.zh-CN.md`，是对应的完整中文阅读版，只用于理解和审查。
-
-中文阅读版不是运行时输入，也不是第二份执行合同。两者出现差异时，以英文 `SKILL.md` 为准；维护时应同步更新对应中文阅读版。
+运行时 Skill 位于 `.cap/capabilities/skills/<name>/SKILL.md`。快速迭代阶段，中文 `SKILL.md` 同时是唯一执行合同和唯一全文维护源；本目录只提供导航和摘要，不维护第二份全文镜像。
 
 ## 阅读顺序
 
-1. 先读 [`assembly-helper` 中文版](skills/assembly-helper.zh-CN.md)，需要执行细节时对照[英文版](../.cap/capabilities/skills/assembly-helper/SKILL.md)。
-2. 设计或修改提示词时读 [`agent-prompt-design 中文版`](skills/agent-prompt-design.zh-CN.md)。
-3. 修改 `.cap` 声明或 lock 时读 [`capability-profile-closure 中文版`](skills/capability-profile-closure.zh-CN.md)。
-4. 评估外部 Skill / Plugin / MCP / Hook 时读 [`capability-lifecycle 中文版`](skills/capability-lifecycle.zh-CN.md)。
-5. 变更较大、需要审查和交接时读 [`spec-change-pack 中文版`](skills/spec-change-pack.zh-CN.md)。
+1. 创建、审查或修改 Agent 装配时，先读 [`assembly-helper`](../.cap/capabilities/skills/assembly-helper/SKILL.md)。
+2. 设计常驻提示词时，读 [`agent-prompt-design`](../.cap/capabilities/skills/agent-prompt-design/SKILL.md)。
+3. 设计条件性多步骤能力时，读 [`agent-skill-design`](../.cap/capabilities/skills/agent-skill-design/SKILL.md)。
+4. 修改 `.cap` 声明或 lock 时，读 [`capability-profile-closure`](../.cap/capabilities/skills/capability-profile-closure/SKILL.md)。
+5. 调研、引入、升级或退役外部能力时，读 [`capability-lifecycle`](../.cap/capabilities/skills/capability-lifecycle/SKILL.md)。
+6. 需要建立基线、证明改善或检查回归时，读 [`agent-behavior-evaluation`](../.cap/capabilities/skills/agent-behavior-evaluation/SKILL.md)。
+7. 变更较大、需要 durable proposal/delta/design/tasks 时，读 [`spec-change-pack`](../.cap/capabilities/skills/spec-change-pack/SKILL.md)。
 
-## 1. assembly-helper · [中文全文](skills/assembly-helper.zh-CN.md) · [English](../.cap/capabilities/skills/assembly-helper/SKILL.md)
+## 当前 Skills
 
-**何时使用**：创建、审查或修改 Agent 装配。
+### `assembly-helper`
 
-**它要求你记录**：
+总入口。恢复 Agent 合同，选择必要的 prompt、Skill、生命周期、闭包和变更包流程，并交付准确证据边界。
 
-- 稳定的 Agent id；
-- 目标和非目标；
-- 触发条件；
-- 输入和输出；
-- 允许和禁止的能力；
-- 验证方式；
-- 剩余未知和风险。
+### `agent-prompt-design`
 
-**核心边界**：装配完成不等于客户端已经生效。必须区分声明态、配置态和生效态。
+设计 system prompt、profile prompt 和常驻指令。负责稳定角色、权威顺序、安全边界、路由和输出不变量；条件性多步骤流程不放入 prompt。
 
-## 2. agent-prompt-design · [中文全文](skills/agent-prompt-design.zh-CN.md) · [English](../.cap/capabilities/skills/agent-prompt-design/SKILL.md)
+### `agent-skill-design`
 
-**何时使用**：设计或修改系统提示词、profile prompt 或常驻 Agent 指令。
+设计条件性多步骤 Agent Skill。负责标准发现元数据、相邻路由边界、渐进披露、自由度选择、验证循环和完成条件。
 
-**关键判断**：
+### `capability-profile-closure`
 
-| 内容类型 | 应放在哪里 |
-|---|---|
-| 所有任务都必须遵守的短约束 | 常驻 prompt / 项目指令 |
-| 有条件触发的多步骤流程 | Skill |
-| 可复用的可信事实 | Knowledge |
-| 当前任务进度、决定和临时状态 | Task state |
+检查 manifest、profile、prompt、能力文件和 lock 的项目内闭包，并分别报告 Skill 标准合规、声明态、配置态和生效态。
 
-**不能做的事**：把长流程、任务状态、秘密或未经验证的运行态结论硬塞进常驻 prompt。
+### `capability-lifecycle`
 
-## 3. capability-profile-closure · [中文全文](skills/capability-profile-closure.zh-CN.md) · [English](../.cap/capabilities/skills/capability-profile-closure/SKILL.md)
+对依赖外部标准、版本、客户端行为或候选资产的决定进行一手来源调研，选择最小可逆的引入、升级或退役路径。
 
-**何时使用**：修改 `.cap/manifest.toml`、profile、prompt、Skills、MCP、Hook 或 Plugin。
+### `agent-behavior-evaluation`
 
-**检查重点**：
+建立行为基线和正反平衡场景，在可比较条件下检查 transcript、最终输出和环境终态，并把结论限制在实际证据覆盖范围内。
 
-- manifest 是否只指向项目内 profile；
-- profile 是否显式声明 prompt、skills、mcps、hooks、plugins；
-- 每个引用能力是否存在；
-- 是否有未引用或隐式继承的能力；
-- 是否存在 symlink、用户级能力旁路或 secret；
-- lock 是否和当前声明一致。
+### `spec-change-pack`
 
-**交付时必须说明**：检查覆盖了声明态、配置态还是生效态；未知不能写成成功。
+使用仓库已授权的 OpenSpec 工作流组织较大的 Agent 行为变更。Proposal、delta、design、tasks/evidence 各自承担不同职责；规划不自动授权实施。
 
-## 4. capability-lifecycle · [中文全文](skills/capability-lifecycle.zh-CN.md) · [English](../.cap/capabilities/skills/capability-lifecycle/SKILL.md)
-**何时使用**：评估、引入、升级、比较或退役外部 Agent 能力。
-
-**工作原则**：
-
-1. 先定义真实能力缺口，不先选仓库或平台。
-2. 外部仓库是证据和模式来源，不是当前项目的授权源。
-3. 优先选择最小、项目内、可回滚的能力。
-4. 修改内容后必须刷新 lock 并检查配置态。
-5. 只有真实运行或 probe 证据才可以支持生效态结论。
-6. 退役时先从 profile 移除引用，再删除文件；不留隐式 alias 或 shim。
-
-## 5. spec-change-pack · [中文全文](skills/spec-change-pack.zh-CN.md) · [English](../.cap/capabilities/skills/spec-change-pack/SKILL.md)
-**何时使用**：新增 profile、改变 Agent 行为、跨客户端能力变更、风险迁移，或未来 Agent 需要审计的变更。
-
-**借鉴 OpenSpec/OPSX 的部分**：
-
-```text
-proposal → behavior delta → design → tasks/evidence → archive
-   why          what             how          prove           fold back
-```
-
-**重要限制**：
-
-- 本仓没有被授权时，不自动创建 `openspec/`；
-- planning 产物不等于 implementation 授权；
-- `MODIFIED` 必须写完整的新行为，不能只写变更摘要；
-- `REMOVED` 必须说明原因和迁移/回滚影响；
-- 归档前必须有闭包验证和相称的运行证据。
-
-## Skill 之间如何协作
+## 协作关系
 
 ```text
 assembly-helper
     ├── agent-prompt-design
+    ├── agent-skill-design
     ├── capability-lifecycle
+    ├── agent-behavior-evaluation
     ├── capability-profile-closure
     └── spec-change-pack
 ```
 
-这不是运行时状态机，而是阅读和选择顺序。具体任务只加载必要的 Skill，不为了“完整”把所有流程串起来。
+这不是固定状态机。具体任务只加载必要 Skill，不为了“完整”串行执行全部流程。

@@ -35,12 +35,28 @@
     ".cap/capabilities/skills": {
       "type": "directory"
     },
+    ".cap/capabilities/skills/agent-behavior-evaluation": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/agent-behavior-evaluation/SKILL.md": {
+      "mode": "0644",
+      "sha256": "333354df9150c95de88d732d8689c44f44a1b24a6ea8ca2c60c38b4cba31c254",
+      "type": "file"
+    },
     ".cap/capabilities/skills/agent-prompt-design": {
       "type": "directory"
     },
     ".cap/capabilities/skills/agent-prompt-design/SKILL.md": {
       "mode": "0644",
-      "sha256": "3e4411291ca2862e4197fd469ef08bd653b46861b1dbe2a8efd1615f64a24655",
+      "sha256": "265188928009bf91c26f6e3ca4e09ddc606cfbccbbcc20d4c64ef441a725bf9a",
+      "type": "file"
+    },
+    ".cap/capabilities/skills/agent-skill-design": {
+      "type": "directory"
+    },
+    ".cap/capabilities/skills/agent-skill-design/SKILL.md": {
+      "mode": "0644",
+      "sha256": "432d7fc4813c413b6691ebdce9563087c8ab8627e0cebcc26c22343ed7d2727a",
       "type": "file"
     },
     ".cap/capabilities/skills/assembly-helper": {
@@ -48,7 +64,7 @@
     },
     ".cap/capabilities/skills/assembly-helper/SKILL.md": {
       "mode": "0644",
-      "sha256": "933e79b01239d3ccbcf794e912278e29fad1674ea8e5343faa70849edfed35ce",
+      "sha256": "38ace404fe09aa116b78071868635a5d772599aab0f218ddb7ae3b1d4386a07e",
       "type": "file"
     },
     ".cap/capabilities/skills/capability-lifecycle": {
@@ -56,7 +72,7 @@
     },
     ".cap/capabilities/skills/capability-lifecycle/SKILL.md": {
       "mode": "0644",
-      "sha256": "8a860553d02a577cc0bdc1bead816f639537f69ed5f575d81be97771a67d508a",
+      "sha256": "b4c5d4c151d84353b34aa6c5883f7c70473153812a0e4acf2721bd32c50e754a",
       "type": "file"
     },
     ".cap/capabilities/skills/capability-profile-closure": {
@@ -64,7 +80,7 @@
     },
     ".cap/capabilities/skills/capability-profile-closure/SKILL.md": {
       "mode": "0644",
-      "sha256": "71432e06a1cbc09462bfcee12fa2df533e64270dc3de60f18b9be5e97a10de92",
+      "sha256": "8febbda7a15e5f397a075e71adeff40af036e0f6cbbfbf3bdc30054fd397a9b0",
       "type": "file"
     },
     ".cap/capabilities/skills/spec-change-pack": {
@@ -72,7 +88,7 @@
     },
     ".cap/capabilities/skills/spec-change-pack/SKILL.md": {
       "mode": "0644",
-      "sha256": "2fb89387883768d9c0e5d88139dfd953d9fb255a79c1b2f758faf5b0c33fbe97",
+      "sha256": "3a050a9657fb47b2d159af10d7d1b8029f3e7cb58d36c51b6a1a4aea7cf1bcfe",
       "type": "file"
     },
     ".cap/manifest.toml": {
@@ -82,17 +98,17 @@
     },
     ".cap/profiles/assembly-helper.toml": {
       "mode": "0644",
-      "sha256": "7cd708e3e84f9f3bdd4082f502839a89daea3e8d1c9033a2f1ac9def57c43e13",
+      "sha256": "6e9776894c426865f33c33a5d658235904280cb7882d9a76114e5a0354a7282a",
       "type": "file"
     },
     ".cap/prompts/assembly-helper.md": {
       "mode": "0644",
-      "sha256": "95ffe1da0bec5a782e8780aaec8bf98aa99d65aabb7ce6d7a72a324425fb48bc",
+      "sha256": "dbce45e0c04383db91866ddc1a215518c58df0f913a043f79959ca3f429ab7dc",
       "type": "file"
     },
     "AGENTS.md": {
       "mode": "0644",
-      "sha256": "1a7febae02ebe4dd3fd5a1c0fe7d4ffa1302a6ed3a2055edf1f425da65c6e45d",
+      "sha256": "7e6fc0519eb9de83c544bfbf301f358df1b18ffe827a6a500e21e22f17b3cb48",
       "type": "file"
     }
   },
@@ -100,13 +116,13 @@
     "assembly-helper": {
       "clients": {
         "codex": {
-          "tree_hash": "sha256:4d6dceffa9eed582e518ad0efbb8969b8639b30b99f1c0920dfe37577ae5d1b4"
+          "tree_hash": "sha256:326ea90219225918f9d232c1d1fa40cbbb01c275f139e81d00054555d071656e"
         },
         "omp": {
-          "tree_hash": "sha256:bad679a6b83325fcfb7841710c81bc265f26c0a76ce445021588b03cf1b06935"
+          "tree_hash": "sha256:3ea37b145234862cb53dbed24b53cc74afede923557831dd5667c749aa07636f"
         },
         "qoder": {
-          "tree_hash": "sha256:86e26be8f01e8c9028c7a8ca7a125a2f0e5646d16196169efdc2036b8d9bdd2b"
+          "tree_hash": "sha256:c20d3b476f5e23839d9f77ffdd2f1022b28623eedc52260e258918a3386e0670"
         }
       },
       "inventory": {
@@ -116,8 +132,10 @@
         "skills": [
           "assembly-helper",
           "agent-prompt-design",
+          "agent-skill-design",
           "capability-profile-closure",
           "capability-lifecycle",
+          "agent-behavior-evaluation",
           "spec-change-pack"
         ]
       }

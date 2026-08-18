@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -34,6 +35,93 @@ DEFAULT_EMPLOYEE_ROOT = DEFAULT_PROJECT.with_name(f"{DEFAULT_PROJECT.name}.emplo
 DEFAULT_PROFILE = "assembly-helper"
 CLIENTS = ("codex", "qoder", "omp")
 DEFAULT_CLI = "omp"
+SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def _decode_frontmatter_scalar(raw: str, path: Path, line: int) -> str:
+    value = raw.strip()
+    if not value:
+        raise ValueError(f"{path}:{line}: 元数据值不能为空")
+    if value.startswith('"'):
+        try:
+            decoded = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{path}:{line}: 无效双引号标量：{exc.msg}") from exc
+        if not isinstance(decoded, str):
+            raise ValueError(f"{path}:{line}: 元数据必须是字符串")
+        return decoded
+    if value.startswith("'"):
+        if len(value) < 2 or not value.endswith("'"):
+            raise ValueError(f"{path}:{line}: 无效单引号标量")
+        return value[1:-1].replace("''", "'")
+    if value[0] in "|>[{&*!":
+        raise ValueError(f"{path}:{line}: 本项目只允许简单字符串 frontmatter")
+    return value
+
+
+def _read_skill_metadata(path: Path) -> dict[str, str]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0].strip() != "---":
+        raise ValueError(f"{path}:1: 缺少 YAML frontmatter 起始分隔符")
+    try:
+        closing = next(index for index, line in enumerate(lines[1:], 1) if line.strip() == "---")
+    except StopIteration as exc:
+        raise ValueError(f"{path}: 缺少 YAML frontmatter 结束分隔符") from exc
+
+    metadata: dict[str, str] = {}
+    for index, line in enumerate(lines[1:closing], 2):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if line[0].isspace():
+            raise ValueError(f"{path}:{index}: 本项目不允许嵌套 frontmatter")
+        key, separator, raw = line.partition(":")
+        if not separator or not re.fullmatch(r"[A-Za-z0-9_-]+", key):
+            raise ValueError(f"{path}:{index}: 无效 frontmatter 字段")
+        if key in metadata:
+            raise ValueError(f"{path}:{index}: 重复 frontmatter 字段 {key}")
+        metadata[key] = _decode_frontmatter_scalar(raw, path, index)
+    return metadata
+
+
+def _skill_metadata_report(project: Path) -> dict[str, object]:
+    skill_root = project / ".cap" / "capabilities" / "skills"
+    issues: list[str] = []
+    skills: list[dict[str, str]] = []
+    if not skill_root.is_dir():
+        issues.append(f"{skill_root}: Skill 目录不存在")
+    else:
+        for skill_dir in sorted(path for path in skill_root.iterdir() if path.is_dir()):
+            skill_file = skill_dir / "SKILL.md"
+            relative = skill_file.relative_to(project).as_posix()
+            if skill_dir.is_symlink() or skill_file.is_symlink():
+                issues.append(f"{relative}: 不允许 symlink")
+                continue
+            if not skill_file.is_file():
+                issues.append(f"{relative}: 文件不存在")
+                continue
+            try:
+                metadata = _read_skill_metadata(skill_file)
+            except (OSError, UnicodeError, ValueError) as exc:
+                issues.append(str(exc))
+                continue
+
+            name = metadata.get("name", "")
+            description = metadata.get("description", "")
+            if not 1 <= len(name) <= 64 or not SKILL_NAME_PATTERN.fullmatch(name):
+                issues.append(f"{relative}: name 必须是 1–64 字符的小写字母、数字和单连字符 id")
+            elif name != skill_dir.name:
+                issues.append(f"{relative}: name {name!r} 与目录 {skill_dir.name!r} 不一致")
+            if not 1 <= len(description) <= 1024:
+                issues.append(f"{relative}: description 必须是 1–1024 个字符")
+            skills.append({"id": skill_dir.name, "path": relative, "name": name})
+
+    return {
+        "standard_conformance": "ok" if not issues else "invalid",
+        "skills": skills,
+        "issues": issues,
+    }
+
 AMBIENT_CONFIG_ENV = {
     "CODEX_HOME",
     "OMP_PROFILE",
@@ -59,6 +147,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "  cap use assembly-helper\n"
             "  cap use assembly-helper -- --version\n"
             "  cap run assembly-helper -- -p \"帮我装配一个 review-agent\"\n"
+            "  cap skills-validate\n"
             "  cap render assembly-helper --output /tmp/rendered-cap\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -100,6 +189,12 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="命令",
         title="命令",
         description="查看 profile，或选择 profile 与 CLI 来使用。",
+    )
+
+    skills_validate = subparsers.add_parser(
+        "skills-validate",
+        help="校验 Agent Skills 元数据",
+        description="校验项目内 SKILL.md 的必需 frontmatter、名称和描述。",
     )
 
     agents = subparsers.add_parser(
@@ -561,6 +656,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(raw_args)
     if hasattr(args, "profile_tool_command") and args.profile_tool_command in {"launch", "run"}:
         args.client_args = passthrough
+    if args.command == "skills-validate":
+        report = _skill_metadata_report(Path(args.project).expanduser().resolve())
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0 if report["standard_conformance"] == "ok" else 2
+    if getattr(args, "profile_tool_command", None) == "verify":
+        report = _skill_metadata_report(Path(args.project).expanduser().resolve())
+        if report["standard_conformance"] != "ok":
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 2
     _migrate_default_agent_home_root(args)
     clean_home = Path(args.home).expanduser()
     clean_home.mkdir(parents=True, exist_ok=True)

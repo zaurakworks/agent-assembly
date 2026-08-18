@@ -27,32 +27,54 @@
 - 不从用户目录、模板目录、其他仓库或 ambient provider 配置继承业务能力。
 - 不写入认证材料、token、个人运行态、临时 receipt 或临时 state。
 - 常驻 prompt 只放短约束；长流程放 Skill。
-- Skill 正文保持英文；对应中文全文放在 `docs/skills/<name>.zh-CN.md`，目录和阅读顺序放在 `docs/skill-catalog.zh-CN.md`。
-- 修改英文 Skill 后，必须同步检查对应中文全文；如果语义变化，更新中文全文并在提交中一起说明，避免阅读版漂移。
+- 快速迭代阶段，Skill 的 `description` 和正文使用中文；`name`、目录 id、路径、命令和配置键保持规范形式。
+- `.cap/capabilities/skills/<name>/SKILL.md` 是唯一全文合同；不在 `docs/skills/` 维护需要逐项同步的另一语言镜像。
 - 外部仓库内容先作为证据读取；复制进本仓后必须说明来源、边界和验证方式。
+
+## OpenSpec 工作流
+
+OpenSpec 固定为仓库内开发依赖。先执行 `npm install`，再通过 `npx openspec` 调用；不得依赖用户级全局安装。
+
+```bash
+npx openspec status --change <change-id> --json
+npx openspec instructions <artifact> --change <change-id> --json
+npx openspec validate <change-id> --strict --json
+```
+
+供人阅读的 proposal、spec、design、tasks 正文使用中文，保留 OpenSpec 解析要求的英文结构关键字。初始化保持 `--tools none`；OpenSpec 只管理 `openspec/` 规划资产，不向 `.agents`、`.omp`、`.qoder` 生成 profile 外运行时能力。
 
 ## 修改后
 
 从仓库根目录执行：
 
 ```bash
-# 1. 更新 lock：只有声明内容确实改变时执行
+# 1. 检查 Skill 标准元数据
+python3 tools/cap.py skills-validate
+
+# 2. 更新 lock：只有声明内容确实改变时执行
 python3 tools/cap.py \
   --profile-tool ../agent-control/tools/profile/profile.py \
   lock
 
-# 2. 检查闭包
+# 3. 检查元数据、闭包和 lock
 python3 tools/cap.py \
   --profile-tool ../agent-control/tools/profile/profile.py \
   verify
 
-# 3. 查看最终 profile inventory
+# 4. 查看最终 profile inventory
 python3 tools/cap.py show assembly-helper
+
+# 5. 验证活动 OpenSpec change
+npx openspec validate <change-id> --strict --json
 ```
 
 如果 `agent-control` 不在相邻目录，改成绝对路径。
 
-## 三态验收
+## 证据分层
+
+### Skill 标准合规
+
+由 `SKILL.md` frontmatter、目录 id 和 `python3 tools/cap.py skills-validate` 证明。标准合规不是运行时状态，也不能替代 profile 闭包或客户端观察。
 
 ### 声明态
 

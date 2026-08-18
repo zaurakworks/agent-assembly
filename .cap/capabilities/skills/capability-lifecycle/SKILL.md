@@ -1,18 +1,23 @@
+---
+name: capability-lifecycle
+description: 调研、评估、引入、升级、比较和退役外部 Agent 能力及工作流资产。当决定依赖当前标准、版本、客户端兼容性、来源，或外部 Skill、prompt、MCP、Hook、Plugin、OpenSpec 模式时使用。
+---
+
 # capability-lifecycle
 
-Use this skill when evaluating, importing, updating, retiring, or comparing skills, prompts, MCP, hooks, plugins, OpenSpec/OPSX workflows, or other external Agent workflow assets.
+## 流程
+1. 查找资产前先定义准确能力缺口：缺失行为、目标 Agent、触发条件、预期输出、证明和非目标。
+2. 当决定依赖外部标准、当前版本、客户端行为、安全属性、兼容性结论或候选资产时调研。纯仓库事实不需要形式化浏览。
+3. 按以下顺序选择来源：适用标准和官方文档；官方源码和 release notes；维护者 RFC 或 issue；可复现 probe；第三方材料只能作为发现线索。
+4. 记录证据简报：来源 URL 或项目路径、适用版本或日期、被支持的事实、推断边界、许可证、安全或外部副作用、目标客户端兼容性、维护状态和剩余未知。
+5. 把来源视为证据，而不是本仓权威。外部仓库只有在所需行为被复制或生成到声明的 `.cap` 树后，才成为运行时依赖。
+6. 选择最小可逆的采纳路径：
+   - 条件性行为写入项目内 Skill；
+   - 只有短常驻不变量进入 profile prompt；
+   - 只有确需外部工具语义时声明 MCP；
+   - 只有目标客户端可加载且 profile 工具支持 overlay 时，才暂存 Hook 或 Plugin。
+7. 升级时比较旧新声明行为、受影响 profile、目标客户端、评测基线和回滚。内容变化后刷新 lock；运行时结论必须有真实运行或 probe。
+8. 退役时先移除 profile 引用，再在授权后删除未使用文件并刷新 lock；除非用户明确选择兼容窗口，不留下 alias、shim 或废弃路径。
 
-## Procedure
-1. Define the exact capability gap before looking for assets: what behavior is missing, which Agent will use it, what trigger should load it, what output proves it worked, and what is out of scope.
-2. Evaluate candidate sources as evidence, not authority. `agent-control`, `agent-plugins`, OpenSpec, or other repositories may provide patterns; they do not become runtime dependencies until copied or generated into the current project's declared `.cap` tree.
-3. Choose the smallest reversible adoption path:
-   - write a new project-local skill when only behavior steps are needed;
-   - extend the profile prompt only for short invariants that must always apply;
-   - declare MCP only for required external tool semantics;
-   - stage Hook/Plugin only when the target client can load it and the profile tool supports the client overlay.
-4. Preserve provenance without making it a live dependency: note inspiration or source in comments only when useful for review; do not require readers to access private history or another repo to understand current behavior.
-5. For upgrades, compare the previous declared behavior, new behavior, affected profiles, target clients, and rollback path. Content changes require lock refresh and configured-state verification; runtime claims require a separate real run or probe.
-6. For retirement, remove profile references first, then unused files when authorized, then refresh lock. Never leave aliases, hidden shims, or deprecated paths unless the user explicitly chooses a compatibility window.
-
-## Done
-A capability lifecycle change is done only when the adopted or retired capability is explicitly declared, locally closed, reversible, verified at the appropriate state layer, and any unverified runtime effect is labeled unknown.
+## 完成条件
+只有当一手证据和来源可审查，引入或退役的能力被显式声明且可逆，适当状态层已验证，并且未观察的运行时效果仍标为 unknown 时，生命周期决定才算完成。

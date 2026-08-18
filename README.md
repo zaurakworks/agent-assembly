@@ -2,7 +2,7 @@
 
 用于维护 **Agent 装配助手（assembly-helper）** 的项目内能力声明、提示词、Skills 与验证证据。
 
-本仓库面向中文使用者：**说明文档和 Skill 阅读版以中文为主，运行时 Skill 正文保留英文**。中文版本用于理解和审查，英文 `SKILL.md` 仍是唯一执行合同。
+本仓库面向中文使用者。快速迭代阶段，`.cap/capabilities/skills/*/SKILL.md` 的中文正文是唯一执行合同；不维护需要逐项同步的另一语言全文镜像。
 
 ## 这个仓库解决什么问题
 
@@ -26,11 +26,24 @@ python3 tools/cap.py agents
 # 查看 profile 的能力闭包和三端 tree hash
 python3 tools/cap.py show assembly-helper
 
-# 校验 manifest、profile、prompt、Skills 与 lock
+# 校验 Agent Skills 标准元数据
+python3 tools/cap.py skills-validate
+
+# 校验 Skill 元数据、manifest、profile、prompt、能力闭包与 lock
 python3 tools/cap.py \
   --profile-tool ../agent-control/tools/profile/profile.py \
   verify
 ```
+
+OpenSpec 作为仓库内开发依赖，通过 `npx` 使用：
+
+```bash
+npm install
+npx openspec list
+npx openspec validate --all --strict
+```
+
+初始化时使用 `--tools none`，不生成 `.agents`、`.omp`、`.qoder` 等 profile 外能力路径。
 
 `../agent-control` 是本地相邻的参考仓。如果路径不同，使用显式参数替换：
 
@@ -53,22 +66,24 @@ python3 tools/cap.py run assembly-helper --cli omp -- \
 |---|---|
 | 了解仓库边界 | [`AGENTS.md`](AGENTS.md) |
 | 了解当前 Agent | [`.cap/prompts/assembly-helper.md`](.cap/prompts/assembly-helper.md) |
-| 看中文 Skill 目录和全文 | [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md) |
+| 看中文 Skill 目录 | [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md) |
 | 了解如何修改和验收 | [`docs/maintenance.zh-CN.md`](docs/maintenance.zh-CN.md) |
 | 查看机器可核验闭包 | [`.cap/lock.json`](.cap/lock.json) |
 | 查看 profile 索引 | [`.cap/manifest.toml`](.cap/manifest.toml) |
 
 ## Skill 目录
 
-运行时文件位于 `.cap/capabilities/skills/<name>/SKILL.md`，正文保持英文；对应的完整中文阅读版位于 [`docs/skills/`](docs/skills/)，总目录见 [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md)。
+运行时文件位于 `.cap/capabilities/skills/<name>/SKILL.md`，中文正文是唯一全文合同；总目录见 [`docs/skill-catalog.zh-CN.md`](docs/skill-catalog.zh-CN.md)。
 
 | Skill | 用途 |
 |---|---|
 | `assembly-helper` | 装配 Agent 的总入口：目标、边界、能力闭包和交付证据 |
-| `agent-prompt-design` | 判断内容应进入常驻 prompt、条件 Skill、知识还是任务状态 |
-| `capability-profile-closure` | 检查 manifest/profile/能力文件的本地闭包和三态证据 |
-| `capability-lifecycle` | 评估、引入、升级、退役外部能力 |
-| `spec-change-pack` | 用 OpenSpec/OPSX 的轻量思想组织较大的行为变更 |
+| `agent-prompt-design` | 设计常驻 prompt 的角色、权威、安全、路由和输出不变量 |
+| `agent-skill-design` | 设计条件性 Skill 的元数据、路由、渐进披露和验收 |
+| `capability-profile-closure` | 检查本地闭包、Skill 标准合规和各状态层证据 |
+| `capability-lifecycle` | 调研、评估、引入、升级和退役外部能力 |
+| `agent-behavior-evaluation` | 建立行为基线、正反场景和可比较运行证据 |
+| `spec-change-pack` | 用 OpenSpec 组织较大的行为变更和长期审计证据 |
 
 ## 三态语义
 
@@ -89,7 +104,7 @@ Hook / Plugin 当前按 `opaque-staging` 处理；没有真实端加载证据时
 - 本仓：装配助手的项目内 profile、prompt、Skills 和验证证据。
 - `agent-control`：公共规则、profile 工具、schema、lock/render/probe 验证实现。
 - `agent-plugins`：跨任务、跨客户端可安装的 runtime Skill / Plugin 资产。
-- `open-spec`：本地参考克隆，不是本仓运行时依赖。
+- `@fission-ai/openspec`：仓库内固定版本的 spec-driven 规划工具；只维护 `openspec/` 资产，不生成 profile 外运行时能力。
 
 ## License
 
