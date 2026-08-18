@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Agent System assembly
+    url: https://github.com/zaurakworks/agent-system/tree/main/.cap
+    about: New profile, prompt, Skill, CAP, and OMP work belongs in agent-system; this source repository remains for migration history.
