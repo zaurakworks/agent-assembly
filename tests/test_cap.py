@@ -84,7 +84,7 @@ class CapEntryTest(unittest.TestCase):
                 "--agent-home-root",
                 str(root / "agent-homes"),
                 "--profile-tool",
-                str(root / "caprun.py"),
+                str(root / "profile.py"),
             ]
             cases = (
                 ([*common, "run", "general", "--cli", "omp", "--", "-p", "check"], "run"),
@@ -240,8 +240,6 @@ class CapPreviewTest(unittest.TestCase):
         self.assertIsNone(preview)
         self.assertTrue(created)
         self.assertTrue(all(not os.path.exists(path) for path in created))
-
-
 
 
 class RealHomeRuntimeTest(unittest.TestCase):

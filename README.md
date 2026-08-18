@@ -36,7 +36,7 @@ python3 tools/cap.py agents
 # 校验 Agent Skills 标准元数据
 python3 tools/cap.py skills-validate
 
-# 校验 Skill 元数据、项目 lock、real-home pin 与两个 profile binding
+# 校验 Skill 元数据、项目 lock、real-home pin 与三层 profile binding
 python3 tools/cap.py verify
 ```
 
